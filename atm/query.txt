@@ -59,4 +59,6 @@ aS'Shopping cost 300.0 yuan in 17:07:48_2015-07-15.'
 p31
 aS'Shopping cost 700.0 yuan in 17:10:03_2015-07-15.'
 p32
+aS'Shopping cost 700.0 yuan in 09:27:53_2015-07-16.'
+p33
 as.

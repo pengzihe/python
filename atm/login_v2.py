@@ -24,14 +24,18 @@ def auth(number,password):  ##login_auth function
 					#print "right"					
 					k = 1
 					return card_number
-			if times == 2:   ##if input password is error in the third,card_number is lock.
+			"""if times == 2:   ##if input password is error in the third,card_number is lock.
 				with open('lock.txt','a') as f:
 					f.write("%s\n" % card_number)
 				return "None"
 			elif k==0:   ##if input password is error,please again.
 				times += 1
-				print "Your password is error,you have %s chances." %(3 - times)
-
+				print "Your password is error,you have %s chances." %(3 - times)"""
+			if k == 0:
+				with open('lock.txt','a') as f:
+					f.write("%s\n" % card_number)
+				return "None"
+			
 
 
 def option(login):   ##Function of credit card 
