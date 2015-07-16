@@ -1,0 +1,62 @@
+(dp0
+S'400123456'
+p1
+(lp2
+sS'120'
+p3
+(lp4
+S'Receive 110 transfer 100 yuan in 12:37:27_2015-07-15'
+p5
+aS'Receive 110 transfer 100 yuan in 12:37:31_2015-07-15'
+p6
+asS'119'
+p7
+(lp8
+sS'110'
+p9
+(lp10
+S'Cash 100 and bank charge is 5.0 in 11:11:28_2015-07-15'
+p11
+aS'Cash 1000 and bank charge is 50.0 in 11:11:33_2015-07-15'
+p12
+aS'Repayment of 1000 yuan in 11:12:13_2015-07-15'
+p13
+aS'Repayment of 100 yuan in 11:12:19_2015-07-15'
+p14
+aS'Cash 100 and bank charge is 5.0 in 12:26:55_2015-07-15'
+p15
+aS'Cash 200 and bank charge is 10.0 in 12:26:58_2015-07-15'
+p16
+aS'Transfer 120 yuan  in 12:27:18_2015-07-15'
+p17
+aS'Transfer 300 yuan  in 12:29:20_2015-07-15'
+p18
+aS'Transfer 50 yuan  in 12:30:26_2015-07-15'
+p19
+aS'Transfer 50 yuan  in 12:30:31_2015-07-15'
+p20
+aS'Cash 500 and bank charge is 25.0 in 12:31:29_2015-07-15'
+p21
+aS'Cash 700 and bank charge is 35.0 in 12:31:32_2015-07-15'
+p22
+aS'Transfer 500 yuan  in 12:31:43_2015-07-15'
+p23
+aS'Transfer 100 yuan  in 12:31:47_2015-07-15'
+p24
+aS'Transfer 100 yuan  in 12:37:27_2015-07-15'
+p25
+aS'Transfer 100 yuan  in 12:37:31_2015-07-15'
+p26
+aS'Cash 100 and bank charge is 5.0 in 15:47:23_2015-07-15'
+p27
+aS'Cash 400 and bank charge is 20.0 in 15:47:34_2015-07-15'
+p28
+aS'Repayment of 500 yuan in 15:47:45_2015-07-15'
+p29
+aS'Shopping cost 700.0 yuan in 17:06:09_2015-07-15.'
+p30
+aS'Shopping cost 300.0 yuan in 17:07:48_2015-07-15.'
+p31
+aS'Shopping cost 700.0 yuan in 17:10:03_2015-07-15.'
+p32
+as.
