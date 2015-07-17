@@ -1,0 +1,373 @@
+strip()    去掉空格
+split()  将字符串切割为列表
+
+文件file:
+
+创建文件
+f = file("myfile.txt",'w')
+f.write("hello")
+f.close()
+
+遍历文件内容
+ f = file('myfile.txt')
+ for line in f.readlines():
+	print line,
+
+f.close()
+
+追加
+f = file("myfile.txt",'a')
+f.write("hello")
+f.close()
+
+替换文件内容
+import fileinput
+
+for line in fileinput.input('myfile.txt',inplace=1):    #inplace=1表示把修改的内容直接写回硬盘，inplace=0，则是表示修改的内容不写回硬盘，直接在屏幕显示
+     line = line.replace("the 5 loop","change me")
+     print line,
+	 
+打开文件
+
+
+with open('myfile.txt','r+') as f:   with open自动关闭文件不用使用f.close()
+	f.readlines()
+
+	
+列表list:
+list.index("mico")  查看mico在列表的索引位置
+list.insert(1,'rain') 将字符'rain'插入到列表的索引位置为1上
+list.reverse() 将列表位置倒序排序，如列表为[1,2,3,4]，reverse之后是[4,3,2,1]
+list.append('mico')  在列表后面插入字符mico
+list.remove('mico')  将列表第一个值为mico的字符删除，如果列表中有多个mico字符，默认也是职位删除第一个，其它的不删除
+list.count('mico') 查看列表中有多少个为'mico'的值，返回一个数值，如果有两个mico则返回2
+list.pop()  默认删除最后一个索引，你可以指定索引，则删除指定列表中的索引
+list.sort() 升序排序
+list.extend() 用于在列表末尾一次性追加另一个序列中的多个值（用新列表扩展原来的列表）,即有列表a[1,2,3]和列表b[4,5,6],将列表b追加到列表a中，则a.extend(b)，最后a列表的值为[1,2,3,4,5,6]
+
+打印字典：
+for i,j in name.items():
+	print i,j
+
+	
+del name['abc']  删除字典为abc的key
+
+name.keys()  查看字典中所有的key
+name.values()  查看字典中所有的value
+name.popitem()  默认删除字典中第一个key
+name.pop('mico') 删除指定key
+name.has_key('mico') 查看字典中是否有mico的key
+
+'\t'.join(values)   ''.join()将列表转换成字符串
+
+python字符对齐
+word="version3.0"
+
+print word.center(20)     #居中输出，总共20个字符，word左右两侧各输出5个空格
+print word.center(20,"*") #居中输出，总共20个字符，word左右两侧各输出5个"*"号
+print word.ljust(0)       #左对齐输出
+print word.rjust(20)      #右对齐输出，总共20个字符，word占10个字符，因此左侧填充一个空格再输出word
+print "0s"%word           #类似于word.rjust(30
+
+
+员工信息表查询代码：
+#!/usr/bin/python
+import tab
+contact_dic = {}
+with open('info.txt') as f:
+	for i in f.readlines():
+		line = i.strip().split()
+		contact_dic[line[0]] = line[1:]
+
+q = 1
+while q > 0:
+	query = raw_input("Please input your check info or input 'q' is exit: ").strip()
+	t = 0
+	if len(query) == 0:
+		continue
+	#if contact_dic.has_key(query):
+	#	print query,contact_dic[query]
+	elif query == 'q':
+		q = 0
+	else:
+		for name,values in contact_dic.items():
+			if name.count(query) != 0: # The "name.count(query) will check to any character."
+				s_index = name.find(query)
+				print name[:s_index] + "\033[32;1m%s\033[0m" % query + name[s_index + len(query):].ljust(10),
+				for i in values:
+					print i.ljust(20),
+				#print name,'\t'.join(values)
+				t = 1  #判断是否能查询到员工信息
+				print "\n"
+				continue  ##If "query" in contact_dic's key,no query values,continue.	
+			for i in values:   ## second loop values
+				if i.count(query) != 0:
+					print name.ljust(10),
+					for j in values:
+						print j.ljust(20),
+                               		
+					t = 1
+					print "\n"	
+					break	
+						
+		if t == 0:
+			print "No valid record."
+
+
+功能要求（必须）：
+1.额度15000
+2.可以体现，手续费5%
+3.每月最后一天出账单（每月30天），写入文件
+4.记录每月日常消费流水
+5.提供还款接口
+
+
+优化（可选）：
+1.每月10日为还款日，过期未还，按全款额5%，计息
+
+
+
+enumerate：枚举函数
+for i,v in enumerate("abcdas"):
+    print i,v
+
+	
+set：集合
+a=[1,2,3,4,1,2,2]
+b=[3,4,5,6,7,3,4]
+a = set(a)
+b = set(b)
+a & b  交集
+a ^ b  差集
+a | b  并集
+a.issubset(b)  测试是否a中的每一个元素都在b中
+a.add("pzh")  添加集合
+a.remove("pzh")  删除集合
+
+map:
+def square2(x):
+        return x * x
+
+a = [1,2,3,4,5]
+print map(square2,a)  将列表a的值分别传递到函数square2中
+
+lamdba:也叫匿名函数
+a = lamdba i: i**20
+a(2)
+
+
+pickle:序列化文件
+pickle.dump(data,file_name)  写数据
+pickle.load(file_name)  读数据
+
+re：正则表达式
+import re
+p = re.compile('hello')   匹配的内容
+p.match("sadadadhello")   match匹配的源数据
+\d：匹配任何十进制数，它相当于[0-9]
+p = re.compile('\d')   匹配数字
+\D: 匹配任何非数字字符，它相当于[^0-9]
+\s：匹配任何空白字符
+\S：匹配任何非空白字符
+\w: 匹配任何字母数字字符，它相当于[a-zA-Z0-9_]
+\W: 匹配任何非字母数字字符，它相当于[^a-zA-Z0-9_]
+
+p =  re.compile('\d+')  +表示匹配一个或多个
+p.split('abcadada23adad45adad')
+p.findall('abcadada23adad45adad')
+
+re.sub()  替换
+re.sub('[abc]','i','makec')  将字符makec中的a、b、c替换为i
+
+                  
+
+模块
+os.popen()
+os.system()
+commands.getoutput()
+
+if __name__ == '__main__':  如果程序自己执行则，__name__为__main__
+
+
+if __name__ == "__main__":
+	print __name__
+else:
+	print __name__
+	
+	
+装饰器：@
+http://www.cnblogs.com/huxi/archive/2011/03/01/1967600.html
+
+#!/usr/bin/python
+
+def deco(f):   
+	def pack():
+		print "Going to virify if you are valid user!"
+		f()
+		print "I am finished....welcome"
+	return pack
+
+@deco   ##   @定义装饰器，将sayHi()函数传给deco(f)，即f=sayHi()。
+def sayHi():
+	print "Hello, i am mico."
+
+sayHi()
+
+-----------------------------------------------------------------------
+#!/usr/bin/python
+
+def deco( f):
+        #def pack():
+        def pack(*args, **kwargs):    ##当函数带不固定参数时，装饰器用*args, **kwargs参数，自动识别函数参数的个数
+                print "Going to virify if you are valid user!"
+                f(*args,**kwargs)
+                print "I am finished....welcome"
+        return pack
+
+@deco
+def sayHi():
+        print "Hello, i am mico."
+
+
+@deco
+def sayName(name):
+        print "Hello,I am %s ------" % name
+
+@deco
+def sayAge(name,age):
+        print "Hello,I am %s and i am %s years old." % (name,age)
+
+		
+		
+		
+		
+yield:  专门给生成器用的return,把函数变成生成器，迭代
+
+#!/usr/bin/python
+
+def countNum():
+	for i in range(10):
+		yield i
+
+a = countNum()
+print a.next()
+print a.next()
+print a.next()
+print a.next()
+print a.next()
+
+
+try ... except: 异常处理
+raise: 手动触发异常
+#!/usr/bin/python
+
+while True；
+	try:
+		int(raw_input("Please input your age: "))
+		a =['mico','steven']
+		if 'jake' not in a:raise IOError
+		break
+	except ValueError:
+		print "You must input an integer."
+	except:
+		print "unexcepted error,please contact us."
+		
+try...finally    #finally无论try块是否抛出异常，永远执行的代码，通常用来执行关闭文件，断开服务器连接的功能等等
+
+		
+类：class
+类的方法（类函数）与普通的函数只有一个特别的区别，它们必须有一个额外
+的第一个参数名称，但是在调用这个方法的时候你不必为这个参数赋值，python
+会提供这个值。这个特别的变量指对象本身，按照惯例它的名称是self.
+
+#!/usr/bin/python
+
+class Dog:
+	def bulk(self):
+		print "hehehehe...."
+
+	def eat(self,food):
+		print "i like eat %s." % food
+d = Dog()
+d.bulk()
+d.eat('meat')
+
+----------------
+def __init__(self,name):   __init__类初始化（构造器）
+def __del__(self):     __del__ 一般写在类的末尾（解构器）
+#!/usr/bin/python
+
+class Dog:
+	
+	def __init__(self,name):
+		self.name = name
+		
+	def bulk(self):
+		print "hehehehe....,my name is %s." % self.name
+
+	def eat(self,food):
+		print "i like eat %s." % food
+		
+	def __del__(self):     #默认会被执行，不用调用
+		print "I am finished...." 
+
+		
+d = Dog('Sam')
+d.bulk()
+d.eat('meat')
+
+
+def __auth(self):   __表示私有函数，外部不能调用
+
+class Dog:
+        def __auth():
+                print "cannot be called outside of this class."
+        __auth()
+
+
+import codecs   ##文字打印模块
+
+
+python连接mysql:	
+ubuntu下要安装python-MysqlDb包，以获得MySQLdb模块
+
+#!/usr/bin/python
+
+import MySQLdb
+
+try:
+	conn = MySQLdb.connect(host='localhost',user='root',passwd='123456',db='python',port=3306)   #连接数据库
+	cur = conn.cursor()  ##cursor用来执行命令的方法，光标
+	cur.execute("insert into host_list values('py','172.16.20.55','windows')")
+	cur.execute('select * from host_list')  ##执行单条语句
+	for line in cur.fetchall():  ##接收全部的返回结果行
+		print line
+	cur.close()   #关闭光标
+	conn.commit()  ##提交事务，否则插入的数据不会保存到mysql中
+	conn.close()  #关闭数据库连接
+	
+except MySQLdb.Error,e:
+	print "Mysql Error Msg:",e
+
+
+
+python Mysql交互常用函数：
+commit() 提交
+rollback() 回滚
+
+cursor用来执行命令的方法：
+callproc(self,procname,args):用来执行存储过程，接收的参数为存储过程名和参数列表，返回值为受影响的行数
+execute(self,query,args):执行单条sql语句，接收的参数为sql语句本身和使用的参数列表，返回值为受影响的行数
+executemany(self,query,args):执行单条sql语句，但是重复执行参数列表里的参数，返回值为受影响的行数
+nextset(self):移动到下一个结果集
+
+cursor用来接收返回值的方法：
+fetchall(self):接收全部的返回结果行
+fetchmany(self,size=None):接收size条返回结果行，如果size的值大于返回的结果行的数量，则会返回cursor.arraysize条数据
+fetchone(self):返回一条结果行
+scroll(self,value,mode='relative'):移动指针到某一行，如果mode='relative',则表示从当前所在行移动value条，如果mode='avsolute',则表示从结果集的第一行移动value条。
+
+
+
+
+
