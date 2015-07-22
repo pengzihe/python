@@ -7,10 +7,26 @@ def title():
 	n = 1
 	print "Menu info:\n"
 	for v in title_name:
-		print "%s\t\t%s" % (n,v)
+		print "\t%s.\t%s" % (n,v)
 		n += 1
 
-title()
+	choose = raw_input("\nPlease input your choose: ").strip()
+	return choose
+
+
+
+def subTitle():
+	title_name = ['Execute commands', 'Copy Files','Exit']
+        n = 1
+        print "Menu info:\n"
+        for v in title_name:
+                print "\t%s.\t%s" % (n,v)
+                n += 1
+
+        choose = raw_input("\nPlease input your choose: ").strip()
+        return choose
+	
+#subTitle()
 	
 
 
