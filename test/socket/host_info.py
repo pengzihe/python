@@ -17,6 +17,7 @@ class hostInfo:
 			conn.close()
 			return result
 		except MySQLdb.Error,e:
+			return 0
 			print "Mysql Error msg: ",e
 #a = hostInfo()
 #b = "insert into host values('a','127.0.0.1','root','123')"

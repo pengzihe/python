@@ -2,8 +2,8 @@
 
 import tab
 
-def title():
-	title_name = ['Choose the host', 'Choose the group','View all hosts','Exit']
+def title(title_name):
+	#title_name = ['Choose the host', 'Choose the group','View all hosts','Exit']
 	n = 1
 	print "Menu info:\n"
 	for v in title_name:
@@ -14,20 +14,6 @@ def title():
 	return choose
 
 
-
-def subTitle():
-	title_name = ['Execute commands', 'Copy Files','Exit']
-        n = 1
-        print "Menu info:\n"
-        for v in title_name:
-                print "\t%s.\t%s" % (n,v)
-                n += 1
-
-        choose = raw_input("\nPlease input your choose: ").strip()
-        return choose
-	
-#subTitle()
-	
 
 
 
