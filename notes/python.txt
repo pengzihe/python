@@ -338,10 +338,16 @@ import MySQLdb
 try:
 	conn = MySQLdb.connect(host='localhost',user='root',passwd='123456',db='python',port=3306)   #连接数据库
 	cur = conn.cursor()  ##cursor用来执行命令的方法，光标
-	cur.execute("insert into host_list values('py','172.16.20.55','windows')")
+	"""cur.execute("insert into host_list values('py','172.16.20.55','windows')")
 	cur.execute('select * from host_list')  ##执行单条语句
 	for line in cur.fetchall():  ##接收全部的返回结果行
-		print line
+		print line"""
+	
+	v_list = []	
+	for i in range(10):
+		v_list.append(("TestServer%s" %i ,"172.16.20.5%s" %i ,"CentOS"))
+	print v_list
+	cur.executemany("insert into host_list values(%s,%s,%s)" , v_list)
 	cur.close()   #关闭光标
 	conn.commit()  ##提交事务，否则插入的数据不会保存到mysql中
 	conn.close()  #关闭数据库连接
@@ -365,7 +371,99 @@ cursor用来接收返回值的方法：
 fetchall(self):接收全部的返回结果行
 fetchmany(self,size=None):接收size条返回结果行，如果size的值大于返回的结果行的数量，则会返回cursor.arraysize条数据
 fetchone(self):返回一条结果行
-scroll(self,value,mode='relative'):移动指针到某一行，如果mode='relative',则表示从当前所在行移动value条，如果mode='avsolute',则表示从结果集的第一行移动value条。
+scroll(self,value,mode='relative'):移动指针到某一行，如果mode='relative',则表示从当前所在行移动value条，如果mode='absolute',则表示从结果集的第一行移动value条。
+
+
+
+Socket函数：
+socket(family,type[,protocal])   使用指定的地址簇、套接字类型，协议编号(默认为0)来创建套接字。
+套接字的实例具有以下方法：
+1.s.bind(address)将套接字绑定到地址。address地址的格式取决于地址簇。在AF_INET下，以元组（host,port）的形式表示地址。
+2.s.listen(backlog) 开始监听传入连接。backlog指定在拒绝连接之前，操作系统可以挂起的最大连接数量。该值至少为1，大部分应用程序设为5就可以了。
+3.s.connect(address) 连接到address处的套接字。一般，address的格式为元组（hostname,port），如果连接同一台机器上的服务器，可以将hostname设为'localhost'。
+如果连接出错，返回socket.error错误。
+4.s.connect_ex(address) 功能与connect(address)相同，但是成功返回0，失败返回errno的值。
+5.s.accept()接收连接并返回(conn,address)，其中conn是最新的套接字对象，可以用来接收和发送数据。address是连接客户端的地址。
+6.s.close() 关闭套接字。
+
+
+
+练习题
+
+批量服务器管理程序
+1. 允许批量并发执行远程命令
+2. 允许批量分发/接收文件
+3. 服务器列表从数据库读取
+4. 服务器分组管理
+
+
+
+paramiko:
+
+import paramiko,sys,os
+host = sys.argv[1]
+user = 'root'
+password = 'www.eegoo'
+cmd = sys.argv[2]
+
+s = paramiko.SSHClient()   #绑定实例
+s.load_system_host_keys()   ##加载本机HOST主机文件（即查看家目录下的known_hosts文件（/root/.ssh/known_hosts ），如果改文件没有记录连接的IP地址，会报错。）
+s.set_missing_host_key_policy(paramiko.AutoAddPolicy())  ##防止known_hosts文件没有相对应的主机报错
+
+#pkey_file = '/root/.ssh/id_rsa'
+#key = paramiko.RSAKey.from_private_key_file(pkey_file)
+#s.connect(host,22,user,pkey=key,timeout=5)
+
+s.connect(host,22,user,password,timeout=5)   #连接远程主机
+stdin,stdout,stderr = s.exec_command(cmd)   #执行命令，s.exec_command(cmd)执行相对应命令，返回三个值，分别赋值给stdin,stdout,stderr 变量
+cmd_result = stdout.read(),stderr.read()  ##读取命令结果，将stdout,stderr的值赋值给cmd_result元组
+
+
+for line in cmd_result:   ##遍历元组内容
+	print line,    
+
+s.close()  #关闭实例	
+
+
+生成私钥：
+ssh-keygen  直接回车即可，产生公钥和私钥
+ssh-copy-id -i 172.16.20.51  将公钥拷贝到172.16.20.51上去，默认会存在/root/.ssh/authorized_keys
+直接执行ssh 172.16.20.51即可登录到172.16.20.51机器上，无需输入密码
+
+
+
+Paramiko SFTP传送文件 
+#!/usr/bin/python
+import paramiko,sys,os
+host = sys.argv[1]
+user = 'root'
+password = 'www.eegoo'
+cmd = sys.argv[2]
+
+s = paramiko.SSHClient()
+s.load_system_host_keys()
+s.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+t = paramiko.Transport((host,22))  #设置ssh连接的远程主机地址和端口
+t.connect(username=user,password=password)   #设置登录名和密码
+
+
+sftp = paramiko.SFTPClient.from_transport(t)  #启动sftp传输协议
+#sftp.get(cmd,'/path/to/filenname')      ##下载文件，下载远程文件然后保存在指定路径下，必须要跟文件名
+sftp.put(cmd,'/path/to/filenname')			##上传文件，上传文件然后保存在指定远程路径下，必须要跟文件名
+
+s.close()
+
+
+
+
+
+
+
+
+
+
+
 
 
 
