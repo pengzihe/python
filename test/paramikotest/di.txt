@@ -1,0 +1,3726 @@
+Index: b2b-beta.xml
+===================================================================
+--- b2b-beta.xml	(.../trunk/b2b)	(revision 14072)
++++ b2b-beta.xml	(.../pzh/b2b)	(revision 14072)
+@@ -1,104 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project name="b2b" basedir="." default="dist">
+-	<property name="dev.env" value="beta"/>
+-	<property name="web.dir" value="${basedir}/web" />
+-	<property name="src.dir" value="${basedir}/src" />
+-	<property name="dist.dir" value="../dist/${dev.env}" />
+-	<property name="build.dir" value="../build/${dev.env}" />
+-	<property name="deploy.dir" value="../deploy/${dev.env}" />
+-	<property file="${deploy.dir}/${ant.project.name}/build.properties" />
+-	<path id="common.rtlib.classpath" description="项目运行时依赖包">
+-		<fileset dir="../tomcat7/lib" includes="*.jar" />
+-	</path>
+-	<target name="init" description="初始化">
+-		<echo>init...</echo>
+-		<delete dir="${dist.dir}/${ant.project.name}" verbose="false" />
+-		<mkdir dir="${dist.dir}/${ant.project.name}" />
+-		<mkdir dir="${dist.dir}/${ant.project.name}/WEB-INF" />
+-		<mkdir dir="${dist.dir}/${ant.project.name}/WEB-INF/classes" />
+-		<mkdir dir="${dist.dir}/${ant.project.name}/WEB-INF/lib" />
+-		<delete dir="${build.dir}/${ant.project.name}" verbose="false" />
+-		<mkdir dir="${build.dir}/${ant.project.name}" />
+-		<mkdir dir="${build.dir}/${ant.project.name}/WEB-INF" />
+-		<mkdir dir="${build.dir}/${ant.project.name}/WEB-INF/classes" />
+-		<mkdir dir="${build.dir}/${ant.project.name}/WEB-INF/lib" />
+-		<mkdir dir="${build.dir}/${ant.project.name}/web" />
+-	</target>
+-	<target name="compile" depends="init" description="编译java代码">
+-		<tstamp>
+-			<format property="touch.time" pattern="yyyy/MM/dd HH:mm:ss" />
+-		</tstamp>
+-		<echo>compile...</echo>
+-		<echo message="${touch.time}" />
+-		<javac description="1.编译java代码" srcdir="${src.dir}" destdir="${build.dir}/${ant.project.name}/WEB-INF/classes" verbose="false" debug="true" encoding="UTF-8" optimize="false" deprecation="false" failonerror="true" includeAntRuntime="false" source="1.6" target="1.6">
+-			<classpath>
+-				<path refid="common.rtlib.classpath" />
+-				<fileset dir="${web.dir}/WEB-INF/lib" includes="*.jar" />
+-			</classpath>
+-		</javac>
+-		<copy description="2.复制java代码中的配置 DaoImpl.xml" todir="${build.dir}/${ant.project.name}/WEB-INF/classes" includeemptydirs="true" verbose="false" overwrite="true">
+-			<fileset dir="${src.dir}">
+-				<include name="**/*DaoImpl.xml" />
+-			</fileset>
+-		</copy>
+-		<jar description="将上面的2步打到jar里面" destfile="${dist.dir}/${ant.project.name}/WEB-INF/lib/${ant.project.name}.jar">
+-			<manifest>
+-				<attribute name="Build-Jdk" value="${ant.java.version}" />
+-				<attribute name="Ant-Version" value="${ant.version}" />
+-				<attribute name="Implementation-Time" value="${touch.time}" />
+-				<attribute name="Class-Path" value="${ant.project.name}.jar" />
+-			</manifest>
+-			<fileset dir="${build.dir}/${ant.project.name}/WEB-INF/classes" />
+-		</jar>
+-		<copy description="其它的配置文件的输出结构不变" todir="${dist.dir}/${ant.project.name}/WEB-INF/classes" includeemptydirs="true" verbose="false" overwrite="true">
+-			<fileset dir="${src.dir}">
+-				<exclude name="**/*DaoImpl.xml" />
+-				<exclude name="**/*.java" />
+-				<include name="**/*.tld" />
+-				<include name="*.xml" />
+-				<include name="*.properties" />
+-				<include name="*.png" />
+-			</fileset>
+-		</copy>
+-	</target>
+-	<target name="war" depends="compile" description="按发布结构输出">
+-		<tstamp>
+-			<format property="touch.time" pattern="yyyy/MM/dd HH:mm:ss" />
+-		</tstamp>
+-		<echo>war...</echo>
+-		<echo message="${touch.time}" />
+-		<copy description="复制jsp、lib和WEB-INF下面的配置文件（web.xml）" todir="${dist.dir}/${ant.project.name}/WEB-INF" includeemptydirs="true" verbose="false" overwrite="true">
+-			<fileset dir="${web.dir}/WEB-INF">
+-				<exclude name="classes/**" />
+-			</fileset>
+-		</copy>
+-		<copy description="复制ui" todir="${dist.dir}/${ant.project.name}" includeemptydirs="true" verbose="false" overwrite="true">
+-			<fileset dir="${web.dir}">
+-			</fileset>
+-		</copy>
+-		<copy description="复制deploy配置" todir="${dist.dir}/${ant.project.name}" includeemptydirs="true" verbose="false" overwrite="true">
+-			<fileset dir="${deploy.dir}/${ant.project.name}">
+-				<exclude name="build.properties" />
+-			</fileset>
+-		</copy>
+-		<!-- <war description="将项目打成war包" destfile="${dist.dir}/${ant.project.name}.war" duplicate="preserve" webxml="${dist.dir}/${ant.project.name}/WEB-INF/web.xml" compress="true"> <fileset dir="${dist.dir}/${ant.project.name}" 
+-			excludes="**/web.xml" /> <manifest> <attribute name="Build-Jdk" value="${ant.java.version}" /> <attribute name="Ant-Version" value="${ant.version}" /> <attribute name="Implementation-Time" value="${touch.time}" 
+-			/> </manifest> </war> -->
+-	</target>
+-	<target name="dist" depends="war" description="默认执行">
+-		<echo>dist...</echo>
+-	</target>
+-	<target name="deploy" depends="dist" description="部署项目">
+-		<echo>deploy...</echo>
+-		<sshexec port="20000" host="${deploy.host}" username="${deploy.username}" password="${deploy.password}" command="rm -rf /data/www/${ant.project.name};mkdir -p /data/www/${ant.project.name}" trust="true" failonerror="false" />
+-		<sleep seconds="5" />
+-		<scp port="20000" todir="${deploy.username}@${deploy.host}:/data/www/${ant.project.name}" password="${deploy.password}" verbose="false" trust="true" failonerror="true">
+-			<fileset dir="${dist.dir}/${ant.project.name}" />
+-		</scp>
+-		<sleep seconds="5" />
+-<!--	<sshexec port="20000" host="${deploy.host}" username="${deploy.username}" password="${deploy.password}" command="sh /usr/local/tomcat/bin/shutdown.sh" trust="true" failonerror="false" />	-->
+-		<sshexec port="20000" host="${deploy.host}" username="${deploy.username}" password="${deploy.password}" command="killall -9 java" trust="true" failonerror="false" />
+-		<sleep seconds="5" />
+-		<sshexec port="20000" host="${deploy.host}" username="${deploy.username}" password="${deploy.password}" command="sh /usr/local/tomcat/bin/startup.sh" trust="true" failonerror="false" />
+-	</target>
+-</project>
+\ No newline at end of file
+Index: db/b2b_v2.sql
+===================================================================
+--- db/b2b_v2.sql	(.../trunk/b2b)	(revision 14072)
++++ db/b2b_v2.sql	(.../pzh/b2b)	(revision 14072)
+@@ -36,16 +36,8 @@
+   PRIMARY KEY (`id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ 
+--- 日期：2014-2-02
+--- 修改人：廖善泉
+--- 说明:资金管理    订单结算表 中 create_by update_by的数据类型是datetime，正确应该是varchar(36)
+  alter table `order_payment` modify column create_by varchar(36);
+  alter table `order_payment` modify column update_by varchar(36);
+- 
+- 
+--- 日期：2014-3-11
+--- 修改人：廖善泉
+--- 说明:会员金料账户
+ CREATE TABLE `member_material_account` (
+   `id` varchar(36) NOT NULL,
+ 	`member_id` varchar(36) NOT NULL COMMENT '会员id',
+@@ -60,9 +52,6 @@
+   PRIMARY KEY (`id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ 
+--- 日期：2014-3-11
+--- 修改人：廖善泉
+--- 说明:金料账户操作日志表
+ CREATE TABLE `member_material_history` (
+   `id` varchar(36) NOT NULL,
+ 	`material_id` varchar(36) NOT NULL COMMENT '金料账户id',
+@@ -115,8 +104,6 @@
+ alter table member_account_history add status int(2) COMMENT '0--成功，1---待确认';
+ alter table pay add enc_code varchar(100) COMMENT '加密Code';
+ 
+-
+-
+ -- 日期：2015-3-11
+ -- 修改人：朱志锋
+ -- 说明:银行支付记录
+@@ -135,16 +122,10 @@
+   `update_date` datetime DEFAULT NULL,
+   PRIMARY KEY (`id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-
+-
+--- 日期：2014-3-16
+--- 修改人：廖善泉
+--- 说明:金料账户操作日志表，添加金料单价，与收料表字段对应。
+ alter table `member_material_history` add column `price` decimal(8,2) DEFAULT NULL COMMENT '单价';
+ ALTER TABLE member_account_history MODIFY COLUMN operate_type int(11)  COMMENT '操作类型（存/取） 1：存 2：取  3: 充值';
+ update member_account_history set operate_type='3' where status='1' or status='0';
+--- 修改人：周伟
+--- 说明:会员品牌关系
++
+ CREATE TABLE `member_brand_rel` (
+   `id` varchar(36) NOT NULL,
+   `brand_id` varchar(36) DEFAULT NULL,
+@@ -152,10 +133,6 @@
+   PRIMARY KEY (`id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ 
+-
+--- 日期：2014-2-02
+--- 修改人：周伟
+--- 说明:品牌
+ CREATE TABLE `product_brand` (
+   `id` varchar(36) NOT NULL,
+   `code` varchar(200) DEFAULT NULL COMMENT '编码',
+@@ -171,7 +148,6 @@
+   PRIMARY KEY (`id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ 
+-
+ -- 日期：2014-2-02
+ -- 修改人：周伟
+ -- 说明: 品牌商品关系
+@@ -182,36 +158,13 @@
+   PRIMARY KEY (`id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ 
++
+ -- 日期：2014-3-27
+ -- 修改人：廖善泉
+ -- 说明: 进货单新增备注字段
+ alter table `cart` add column `description` text DEFAULT NULL COMMENT '进货单备注';
+-
+--- 日期：2014-3-27
+--- 修改人：朱志峰
+--- 说明: 新增农行数据
++-- 日期：2015-3-27
++-- 修改人：朱志锋
++-- 说明:添加农行
+ INSERT INTO `banks` VALUES ('3', 'C_ABC', '个人农业银行', '41006900040047719', '', '', '', '3', 'com.eegoo.b2b.entity.C_ABCPay', '0', null, null, null, null);
+-INSERT INTO `banks` VALUES ('4', 'M_ABC', '企业农业银行', '41006900040047719', '', '', '', '2', 'com.eegoo.b2b.entity.M_ABCPay', '0', null, null, null, null);
+-
+-
+-
+--- 日期：2014-4-3
+--- 修改人：廖善泉
+--- 说明: 实现销售定价功能
+-alter table `order` add column `price_operator` VARCHAR(36) DEFAULT NULL COMMENT '定价人(关联员工表)';
+-alter table `order` add column `price_gold_price` text DEFAULT NULL COMMENT '销售定价字符串';
+-alter table `order` add column `price_description` text DEFAULT NULL COMMENT '定价备注';
+-alter table `order` add column `price_date` VARCHAR(36) DEFAULT NULL COMMENT '定价日期';
+-alter table `order` add column `audit_price` int(1) DEFAULT 0 COMMENT '定价审核状态 0 未定价 1未审核 2审核通过 3审核不通过';
+-alter table `order` add column `audit_operator`  VARCHAR(36) DEFAULT NULL COMMENT '审核人';
+-alter table `order` add column `audit_description` text DEFAULT NULL COMMENT '审核备注';
+-alter table `order` add column `audit_priceDate` VARCHAR(36) DEFAULT NULL COMMENT '审核日期';
+-alter table `order` add column `curr_gold_price` text DEFAULT NULL COMMENT '下单日金价';
+-alter table `order_product` add column `fineness_id` VARCHAR(36) DEFAULT NULL COMMENT '成色id';
+-alter table `order_product` add column `gold_price` decimal(8,2) DEFAULT NULL COMMENT '销售定价';
+-
+--- 日期：2014-4-20
+--- 修改人：廖善泉
+--- 说明: 把成色的id同步到订单商品表中
+-UPDATE order_product op, fineness f SET op.fineness_id = f.id WHERE  op.fineness = f.name;
+-
++INSERT INTO `banks` VALUES ('4', 'M_ABC', '企业农业银行', '41006900040047719', '', '', '', '2', 'com.eegoo.b2b.entity.M_ABCPay', '0', null, null, null, null);
+\ No newline at end of file
+Index: src/ehcache.xml
+===================================================================
+--- src/ehcache.xml	(.../trunk/b2b)	(revision 14072)
++++ src/ehcache.xml	(.../pzh/b2b)	(revision 14072)
+@@ -1,7 +1,6 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+ 	xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd" >
+-	<!--timeToIdleSeconds 当缓存闲置n秒后销毁 -->
+     <!--timeToLiveSeconds 当缓存存活n秒后销毁 -->
+     <!-- 缓存配置
+     name:缓存名称。
+@@ -18,16 +17,17 @@
+     clearOnFlush：内存数量最大时是否清除。
+     -->
+  
+-	<diskStore path="java.io.tmpdir" />
+-
++    <diskStore path="java.io.tmpdir"/>
++    
+     <defaultCache
+ 	     maxElementsInMemory="50000"
+ 	     eternal="false"
+ 	     timeToIdleSeconds="300"
+ 	     timeToLiveSeconds="1200"
+-	     overflowToDisk="true"
+-	     />
+-
++	    
++        overflowToDisk="true"
++        />
++        
+     <cache name="B2BCache"
+         maxElementsInMemory="500000"
+         eternal="false"
+@@ -35,4 +35,5 @@
+         timeToLiveSeconds="1800"
+         overflowToDisk="true"
+         />
++ 
+ </ehcache>
+\ No newline at end of file
+Index: src/jdbc.properties
+===================================================================
+--- src/jdbc.properties	(.../trunk/b2b)	(revision 14072)
++++ src/jdbc.properties	(.../pzh/b2b)	(revision 14072)
+@@ -1,8 +1,10 @@
+ #mysql 
+ jdbc.driverclass=com.mysql.jdbc.Driver
+-jdbc.username=b2b_dev
+-jdbc.password=123456
++#jdbc.username=b2b_dev
++jdbc.username=bank
++jdbc.password=g3cJr3N+Qp@0o@WzNWD~)]m@,Xc^=A
+ db.pool.maxpoolsize=10
+ db.pool.minpoolsize=3
+-jdbc.url=jdbc:mysql://172.16.20.216:3306/b2b_dev?useUnicode=true&characterEncoding=utf8&characterSetResults=utf8&autoReconnect=true&autoReconnectForPools=true&rewriteBatchedStatements=true
++jdbc.url=jdbc:mysql://localhost:3306/b2b?useUnicode=true&characterEncoding=utf8&characterSetResults=utf8&autoReconnect=true&autoReconnectForPools=true&rewriteBatchedStatements=true
++#jdbc.url=jdbc:mysql://172.16.20.216:3306/b2b_dev?useUnicode=true&characterEncoding=utf8&characterSetResults=utf8&autoReconnect=true&autoReconnectForPools=true&rewriteBatchedStatements=true
+ password.secret=test
+Index: src/spring.xml
+===================================================================
+--- src/spring.xml	(.../trunk/b2b)	(revision 14072)
++++ src/spring.xml	(.../pzh/b2b)	(revision 14072)
+@@ -62,7 +62,6 @@
+ 		<property name="maxPoolSize" value="${db.pool.maxpoolsize}" />
+ 		<property name="minPoolSize" value="${db.pool.minpoolsize}" />
+ 		<property name="idleConnectionTestPeriod" value="3000" />
+-		<property name="checkoutTimeout" value="60000" />
+ 	</bean>
+ 
+ 	<!-- 创建SqlSessionFactory -->
+@@ -214,7 +213,5 @@
+     
+     <task:annotation-driven scheduler="qbScheduler" mode="proxy"/>  
+     <task:scheduler id="qbScheduler" pool-size="10"/>
+-    
+     <import resource="classpath*:spring-cache.xml"/>
+-    
+ </beans>
+\ No newline at end of file
+Index: src/com/eegoo/b2b/bo/OrderBO.java
+===================================================================
+--- src/com/eegoo/b2b/bo/OrderBO.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/bo/OrderBO.java	(.../pzh/b2b)	(revision 14072)
+@@ -87,27 +87,6 @@
+ 	private String productId;
+ 	
+ 	/**
+-	 * 销售定价字符串
+-	 */
+-	private String priceGoldPrice;
+-	
+-	/**
+-	 * 订单商品信息（批量修改定价工费等）
+-	 */
+-	private String orderProducts;
+-	
+-	/**
+-	 * 是否可定价订单 1：是
+-	 */
+-	private int isOnlyPrice;
+-	
+-	/**
+-	 * 定价状态
+-	 */
+-	private int auditPrice;
+-
+-	
+-	/**
+ 	 * 销售地址ids
+ 	 * 用户报表查询地区详情
+ 	 */
+@@ -225,36 +204,4 @@
+ 		this.orderStatusArray = orderStatusArray;
+ 	}
+ 
+-	public String getPriceGoldPrice() {
+-		return priceGoldPrice;
+-	}
+-
+-	public void setPriceGoldPrice(String priceGoldPrice) {
+-		this.priceGoldPrice = priceGoldPrice;
+-	}
+-
+-	public int getIsOnlyPrice() {
+-		return isOnlyPrice;
+-	}
+-
+-	public void setIsOnlyPrice(int isOnlyPrice) {
+-		this.isOnlyPrice = isOnlyPrice;
+-	}
+-
+-	public int getAuditPrice() {
+-		return auditPrice;
+-	}
+-
+-	public void setAuditPrice(int auditPrice) {
+-		this.auditPrice = auditPrice;
+-	}
+-
+-	public String getOrderProducts() {
+-		return orderProducts;
+-	}
+-
+-	public void setOrderProducts(String orderProducts) {
+-		this.orderProducts = orderProducts;
+-	}
+-
+ }
+\ No newline at end of file
+Index: src/com/eegoo/b2b/bo/MemberBO.java
+===================================================================
+--- src/com/eegoo/b2b/bo/MemberBO.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/bo/MemberBO.java	(.../pzh/b2b)	(revision 14072)
+@@ -53,7 +53,6 @@
+ 	private String q;
+ 	
+ 	private Long[] lockedStatus;
+-	//查询排除的ID
+ 	private String[] expIds;
+ 
+ 	public MemberBO() {
+@@ -112,9 +111,7 @@
+ 	public String[] getExpIds() {
+ 		return expIds;
+ 	}
+-
+ 	public void setExpIds(String[] expIds) {
+ 		this.expIds = expIds;
+ 	}
+-	
+ }
+\ No newline at end of file
+Index: src/com/eegoo/b2b/service/OrderService.java
+===================================================================
+--- src/com/eegoo/b2b/service/OrderService.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/service/OrderService.java	(.../pzh/b2b)	(revision 14072)
+@@ -112,18 +112,4 @@
+     * @return
+     */
+    public List<StockOutOrderProductRel> getStockOutOrderProductByOrderId(String orderId);
+-   
+-   /**
+-    * 查询销售订单定价基本信息
+-    * @param id
+-    * @return
+-    */
+-   public Order searchPrice(String id);
+-   
+-   /**
+-    * 修改定价
+-    * @param orderBO
+-    */
+-   public void updatePrice(OrderBO orderBO);
+-   
+ }
+\ No newline at end of file
+Index: src/com/eegoo/b2b/service/impl/OrderServiceImpl.java
+===================================================================
+--- src/com/eegoo/b2b/service/impl/OrderServiceImpl.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/service/impl/OrderServiceImpl.java	(.../pzh/b2b)	(revision 14072)
+@@ -39,7 +39,6 @@
+ import java.text.DecimalFormat;
+ import java.util.ArrayList;
+ import java.util.List;
+-import java.util.Map;
+ 
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+@@ -47,8 +46,6 @@
+ import org.springframework.beans.factory.annotation.Qualifier;
+ import org.springframework.stereotype.Service;
+ 
+-import com.alibaba.fastjson.JSON;
+-import com.alibaba.fastjson.JSONArray;
+ import com.eegoo.b2b.bo.OrderBO;
+ import com.eegoo.b2b.bo.OrderProductBO;
+ import com.eegoo.b2b.bo.ProductImageBO;
+@@ -583,72 +580,5 @@
+ 		return result;
+ 
+ 	}
+-	
+-	 /**
+-	    * 查询销售订单定价基本信息
+-	    * @param id
+-	    * @return
+-	    */
+-	   public Order searchPrice(String id){
+-		  return (Order) orderDao.searchPrice(id);
+-	   }
+-	   
+-	   /**
+-	    * 修改定价
+-	    * @param orderBO
+-	    */
+-	   public void updatePrice(OrderBO orderBO){
+-		   try {
+-			    Order order = orderBO.getOrder();
+-			    JSONArray arrays = JSON.parseArray(orderBO.getPriceGoldPrice());
+-				if(null != arrays){
+-					for(int j = 0; j < arrays.size(); j++){
+-						Map<String,Object> m = (Map<String,Object>)arrays.get(j);
+-						String finenessId = m.get("finenessId").toString();
+-						String goldPriceStr =  "".equals(m.get("goldPrice"))? "0":m.get("goldPrice").toString(); //销售金价
+-						Double goldPrice = Double.parseDouble(goldPriceStr);
+-						orderProductService.updateGoldPrice(order.getId(),finenessId, goldPrice);
+-					}
+-				}
+-				if(order.getAuditPrice() == null || order.getAuditPrice() == 0){
+-					order.setAuditPrice(1);
+-				}
+-				this.orderDao.update(order);
+-				
+-				//orderProducts 工费
+-				String orderProducts = orderBO.getOrderProducts();
+-				if(orderProducts != null && !"".equals(orderProducts) ){
+-					JSONArray orderProuctArrays = JSON.parseArray(orderProducts);
+-					if(null != orderProuctArrays){
+-						for(int j = 0; j < orderProuctArrays.size(); j++){
+-							Map<String,Object> m = (Map<String,Object>)orderProuctArrays.get(j);
+-							String id = m.get("id").toString();
+-							String baseChargeStr =  "".equals(m.get("baseCharge"))? "0":m.get("baseCharge").toString(); // 	销售金价
+-							String extraChargeStr =  "".equals(m.get("extraCharge"))? "0":m.get("extraCharge").toString(); // 	销售金价
+-							String processingFeeStr =  "".equals(m.get("processingFee"))? "0":m.get("processingFee").toString(); // 	销售金价
+-							String salePriceStr =  "".equals(m.get("salePrice"))? "0":m.get("salePrice").toString(); // 	销售金价
+-							
+-							Double baseCharge = Double.parseDouble(baseChargeStr);
+-							Double extraCharge = Double.parseDouble(extraChargeStr);
+-							Double processingFee = Double.parseDouble(processingFeeStr);
+-							Double salePrice = Double.parseDouble(salePriceStr);
+-							
+-							OrderProduct orderProduct = null;
+-							if(id != null && !"".equals(id) ){
+-								orderProduct = new OrderProduct();
+-								orderProduct.setId(id);
+-								orderProduct.setBaseCharge(baseCharge);
+-								orderProduct.setExtraCharge(extraCharge);
+-								orderProduct.setProcessingFee(processingFee);
+-								orderProduct.setSalePrice(salePrice);
+-								orderProductService.update(orderProduct);
+-								
+-							}
+-						}
+-					}
+-				}
+-		   } catch (Exception e) {
+-				logger.error("updatePrice is error",e);
+-			}
+-	   }
++
+ }
+\ No newline at end of file
+Index: src/com/eegoo/b2b/service/impl/DirectInvoiceNoteServiceImpl.java
+===================================================================
+--- src/com/eegoo/b2b/service/impl/DirectInvoiceNoteServiceImpl.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/service/impl/DirectInvoiceNoteServiceImpl.java	(.../pzh/b2b)	(revision 14072)
+@@ -37,6 +37,7 @@
+ 
+ import java.math.BigDecimal;
+ import java.util.ArrayList;
++import java.util.Collection;
+ import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.List;
+@@ -61,11 +62,11 @@
+ import com.eegoo.b2b.dao.StockOutOrderProductRelDao;
+ import com.eegoo.b2b.entity.DirectInvoiceNote;
+ import com.eegoo.b2b.entity.DirectInvoiceProduct;
+-import com.eegoo.b2b.entity.Order;
+ import com.eegoo.b2b.entity.OrderProduct;
+ import com.eegoo.b2b.entity.Product;
+ import com.eegoo.b2b.entity.ProductPureMetal;
+ import com.eegoo.b2b.entity.PurchaseOrderProduct;
++import com.eegoo.b2b.entity.StandardGoldPrice;
+ import com.eegoo.b2b.entity.StockOutOrderProductRel;
+ import com.eegoo.b2b.exception.ExceptionConstant;
+ import com.eegoo.b2b.exception.runtime.ServiceException;
+@@ -80,6 +81,7 @@
+ import com.eegoo.b2b.util.DateUtil;
+ import com.eegoo.b2b.util.NumberConstants;
+ import com.eegoo.b2b.util.Pagination;
++import com.eegoo.b2b.util.ProductBaseDataUtil;
+ 
+ /**
+  * <pre>
+@@ -275,7 +277,6 @@
+ 						String costPrice = "".equals(m.get("costPrice"))? "0":m.get("costPrice").toString(); // 成本金价
+ 						String productId =m.get("productId").toString();
+ 						String productStandardId = "".equals(m.get("productStandardId"))? "": m.get("productStandardId").toString(); // 重量规格
+-						String productStandardName = m.get("productStandardName")==null? "": m.get("productStandardName").toString(); //
+ 						String quantity = "".equals(m.get("quantity"))? "0":m.get("quantity").toString(); // 数量
+ 						String weight = "".equals(m.get("weight")) ? "0":m.get("weight").toString(); // 单件重量
+ 						String totalWeight = "".equals(m.get("totalWeight")) ? "0":m.get("totalWeight").toString(); // 商品总重量
+@@ -291,7 +292,6 @@
+ 						directInvoiceProduct.setProductId(productId);
+ 						directInvoiceProduct.setCostPrice(Double.parseDouble(costPrice));
+ 						directInvoiceProduct.setProductStandardId(productStandardId);
+-						directInvoiceProduct.setProductStandardName(productStandardName);
+ 						directInvoiceProduct.setQuantity(Long.parseLong(quantity));
+ 						directInvoiceProduct.setWeight(Double.parseDouble(weight));
+ 						directInvoiceProduct.setTotalWeight(Double.parseDouble(totalWeight));
+@@ -377,23 +377,20 @@
+ 					logger.info("审核失败，该采购单已被采购入库单关联");
+ 					return 2;
+ 				}
++				
++				
++				//获取出库单商品
++				DirectInvoiceProductBO directInvoiceProductBO = new DirectInvoiceProductBO();
++				directInvoiceProductBO.getDirectInvoiceProduct().setNoteId(directInvoiceNoteId);
++				Pagination rows = directInvoiceProductService.search(directInvoiceProductBO);
++				List<DirectInvoiceProduct> directInvoiceProductList = (List<DirectInvoiceProduct>)rows.getRows();
++				
+ 				// 获取预选订单商品
+ 				String [] orderCodes = directInvoiceNote.getOrderCode().split(",");
+ 				List<OrderProduct> orderProducts = orderProductService.getByOrderCodes(orderCodes);
+ 				
+ 				Map<String,List<OrderProduct>> productMap = new HashMap<String,List<OrderProduct>>();
+-				String currOrderId = ""; // 当前的orderid
+ 				for (OrderProduct orderProduct : orderProducts) {
+-					// 验证是否定价
+-					if("".equals(currOrderId) || !currOrderId.equals(orderProduct.getOrderId())){
+-						Order order = orderService.get(orderProduct.getOrderId());
+-						currOrderId = order.getId();
+-						if (!(2 == order.getAuditPrice() && orderProduct.getGoldPrice() != null)) {
+-							logger.info("审核失败，订单为("+order.getCode()+")未销售定价");
+-							throw new ServiceException(ExceptionConstant.BUS_DATA_NULL.getKey(),"审核失败，订单为("+order.getCode()+")未销售定价");
+-						}
+-					}
+-					
+ 					String productStandardId = orderProduct.getProductStandardId();
+ 					List<OrderProduct> l = productMap.get(productStandardId);
+ 					if (l != null && l.size() > 0) {
+@@ -405,12 +402,6 @@
+ 					}
+ 				}
+ 				
+-				
+-				//获取出库单商品
+-				DirectInvoiceProductBO directInvoiceProductBO = new DirectInvoiceProductBO();
+-				directInvoiceProductBO.getDirectInvoiceProduct().setNoteId(directInvoiceNoteId);
+-				Pagination rows = directInvoiceProductService.search(directInvoiceProductBO);
+-				List<DirectInvoiceProduct> directInvoiceProductList = (List<DirectInvoiceProduct>)rows.getRows();
+ 				for(int i = 0 ; i < directInvoiceProductList.size() ; i ++ ){
+ 					DirectInvoiceProduct directInvoiceProduct = directInvoiceProductList.get(i);
+ 					
+@@ -422,20 +413,20 @@
+ 					
+ 				}
+ 				//实时金价描述
+-//				Map<String, StandardGoldPrice> goldPrice = ProductBaseDataUtil.getFinenessPriceMap();
+-//				StringBuffer bf = new StringBuffer();
+-//				Collection<StandardGoldPrice> list = (Collection<StandardGoldPrice>) goldPrice.values();
+-//				for (StandardGoldPrice standardGoldPrice : list) {
+-//					if(standardGoldPrice.getPrice() != null){
+-//						bf.append(standardGoldPrice.getFinenessName()+":"+standardGoldPrice.getPrice()+"元/克"+"; ");
+-//					}
+-//				}
++				Map<String, StandardGoldPrice> goldPrice = ProductBaseDataUtil.getFinenessPriceMap();
++				StringBuffer bf = new StringBuffer();
++				Collection<StandardGoldPrice> list = (Collection<StandardGoldPrice>) goldPrice.values();
++				for (StandardGoldPrice standardGoldPrice : list) {
++					if(standardGoldPrice.getPrice() != null){
++						bf.append(standardGoldPrice.getFinenessName()+":"+standardGoldPrice.getPrice()+"元/克"+"; ");
++					}
++				}
+ 				
+ 				DirectInvoiceNoteBO directInvoiceNoteBO = new DirectInvoiceNoteBO();
+ 				directInvoiceNoteBO.getDirectInvoiceNote().setId(directInvoiceNoteId);
+ 				directInvoiceNoteBO.getDirectInvoiceNote().setAuditStatus(auditStatus);
+ 				directInvoiceNoteBO.getDirectInvoiceNote().setAuditDescription(auditDescription);
+-				// directInvoiceNoteBO.getDirectInvoiceNote().setSaleGoldPriceDesc(bf.toString());
++				directInvoiceNoteBO.getDirectInvoiceNote().setSaleGoldPriceDesc(bf.toString());
+ 				super.update(directInvoiceNoteBO.getDirectInvoiceNote());
+ 				
+ 			}else {
+@@ -514,16 +505,14 @@
+ 			logger.info("出库商品中含有已经删除的商品");
+ 			throw new ServiceException(ExceptionConstant.BUS_DATA_NULL.getKey(),"出库商品中含有已经删除的商品");
+ 		}
+-		/*String fineness_id = product.getProductPureMetal().getFinenessId();
++		
++		String fineness_id = product.getProductPureMetal().getFinenessId();
+ 		Double saleGoldPrice =ProductBaseDataUtil.getFinenessPrice(fineness_id);
+ 		if(saleGoldPrice == null){
+ 			logger.info("获取实时金价失败");
+ 			throw new ServiceException(ExceptionConstant.BUS_DATA_NULL.getKey(),"获取实时金价失败");
+-		}*/
++		}
+ 		
+-		
+-		
+-		
+ 		//要出的数量
+ 		long toOutQuantity = directInvoiceProduct.getQuantity();
+ 		//要出的重量
+@@ -549,15 +538,13 @@
+ 				soopr=new StockOutOrderProductRel();
+ 				soopr.setStockOutProductId(directInvoiceProduct.getId());
+ 				soopr.setOrderProductId(orderProduct.getId());
+-				// soopr.setSaleGoldPrice(saleGoldPrice);// 修改为订单定价
+-				soopr.setSaleGoldPrice(orderProduct.getGoldPrice());
++				soopr.setSaleGoldPrice(saleGoldPrice);
+ 				soopr.setType(NumberConstants.NUM_2); // 标记为直接配货出库
+ 				soopr.setCreateDate(DateUtil.getTimestamp());
+ 				if (leftQuantity>=toOutQuantity) {			//出完
+ 					temProduct.setStockOutQuantity(outQuantity+toOutQuantity);
+ 					//销售价格
+-					//temProduct.setTotalSalePrice(getAmount(orderProduct,toOutWeight,toOutQuantity,saleGoldPrice)); // 修改为订单定价
+-					temProduct.setTotalSalePrice(getAmount(orderProduct,toOutWeight,toOutQuantity,orderProduct.getGoldPrice()));
++					temProduct.setTotalSalePrice(getAmount(orderProduct,toOutWeight,toOutQuantity,saleGoldPrice));
+ 					temProduct.setTotalWeight(BigNumber.add(totalWeight, toOutWeight));
+ 					orderProductService.update(temProduct);   //更新订单商品出库数量/ 销售价格  出库重量
+ 					//本次已发数量
+@@ -572,8 +559,7 @@
+ 					temProduct.setStockOutQuantity(orderProduct.getQuantity());
+ 					double outWeight=pieceWeight*leftQuantity;
+ 					temProduct.setTotalWeight(BigNumber.add(totalWeight,outWeight ));
+-					// temProduct.setTotalSalePrice(getAmount(orderProduct,outWeight,leftQuantity,saleGoldPrice)); // 销售订单定价
+-					temProduct.setTotalSalePrice(getAmount(orderProduct,outWeight,leftQuantity,orderProduct.getGoldPrice()));
++					temProduct.setTotalSalePrice(getAmount(orderProduct,outWeight,leftQuantity,saleGoldPrice));
+ 					orderProductService.update(temProduct);   //更新订单商品出库数量/ 销售价格  出库重量
+ 					toOutQuantity-=leftQuantity;
+ 					toOutWeight=BigNumber.sub(toOutWeight, pieceWeight*leftQuantity);
+@@ -591,15 +577,15 @@
+ 		}
+ 		if (isEnough) {
+ 			//维护实时金价（目前没有使用该字段显示）
+-//			DirectInvoiceProduct temp = new DirectInvoiceProduct();
+-//			temp.setId(directInvoiceProduct.getId());
+-//			temp.setSaleGoldPrice(saleGoldPrice); // 修改为订单定价后，该字段无效了
+-//			directInvoiceProductDao.update(temp);
++			DirectInvoiceProduct temp = new DirectInvoiceProduct();
++			temp.setId(directInvoiceProduct.getId());
++			temp.setSaleGoldPrice(saleGoldPrice);
++			directInvoiceProductDao.update(temp);
+ 			
+ 			stockOutOrderProductRelDao.insertList(soopRels);
+ 		}else{
+-			logger.error("出库商品"+product.getCode()+"，规格："+directInvoiceProduct.getProductStandardName()+"。无法正常配货"+directInvoiceProduct.getQuantity()+"件商品");
+-			throw new ServiceException(ExceptionConstant.BUS_DATA_VALID_ERROR.getKey(),"商品编号："+product.getCode()+"，规格："+directInvoiceProduct.getProductStandardName()+"。出库数量大于订单数量");
++			logger.error("出库商品"+product.getCode()+"规格"+directInvoiceProduct.getProductStandardName()+"无法正常配货"+directInvoiceProduct.getQuantity()+"件商品");
++			throw new ServiceException(ExceptionConstant.BUS_DATA_VALID_ERROR.getKey(),"商品编号："+product.getCode()+"规格"+directInvoiceProduct.getProductStandardName()+"出库数量大于订单数量");
+ 		}
+ 		logger.info("updateOrderByDirect end ...");
+ 	}
+Index: src/com/eegoo/b2b/service/impl/OrderProductServiceImpl.java
+===================================================================
+--- src/com/eegoo/b2b/service/impl/OrderProductServiceImpl.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/service/impl/OrderProductServiceImpl.java	(.../pzh/b2b)	(revision 14072)
+@@ -271,14 +271,5 @@
+       return rows;
+ 	}
+ 	
+-	 /**
+-	    * 更新销售定价
+-	    * @param finenessId
+-	    * @param GoldPrice
+-	    */
+-	   public void updateGoldPrice(String orderId,String finenessId,Double goldPrice){
+-		   orderProductDao.updateGoldPrice(orderId,finenessId,goldPrice);
+-	   }
+ 	
+-	
+ }
+\ No newline at end of file
+Index: src/com/eegoo/b2b/service/impl/PayServiceImpl.java
+===================================================================
+--- src/com/eegoo/b2b/service/impl/PayServiceImpl.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/service/impl/PayServiceImpl.java	(.../pzh/b2b)	(revision 14072)
+@@ -430,7 +430,7 @@
+ 		}else if("M_ABC".equals(bankCode)){
+ 			pay.setPayBankUrl(PropertyUtil.getProperty(Constants.PAY_DOMAIN) + "/pay/mabcPayCallBack");
+ 			pay.setRemark1("");
+-			Map<String,String> result = ((M_ABCPay)pay).submitPay();
++			Map<String, String> result = ((M_ABCPay) pay).submitPay();
+ 			model.addAttribute("isSuccess",result.get("isSuccess"));
+ 			if("1".equals(result.get("isSuccess"))){
+ 				model.addAttribute("paymentURL", result.get("paymentURL"));
+@@ -443,6 +443,7 @@
+ 			p.setOrderUrl(PropertyUtil.getProperty(Constants.MEMBER_DOMAIN) + "/member/order/go");
+ 			Map<String,String> result = p.submitPay();
+ 			System.out.println("-----------------------------------------------------------------------------------" + p);
++
+ 			model.addAttribute("isSuccess",result.get("isSuccess"));
+ 			if("1".equals(result.get("isSuccess"))){
+ 				model.addAttribute("paymentURL", result.get("paymentURL"));
+Index: src/com/eegoo/b2b/service/impl/StockOutNoteServiceImpl.java
+===================================================================
+--- src/com/eegoo/b2b/service/impl/StockOutNoteServiceImpl.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/service/impl/StockOutNoteServiceImpl.java	(.../pzh/b2b)	(revision 14072)
+@@ -48,7 +48,6 @@
+ import com.eegoo.b2b.dao.StockOutNoteDao;
+ import com.eegoo.b2b.dao.StockOutOrderProductRelDao;
+ import com.eegoo.b2b.dao.StockOutProductDao;
+-import com.eegoo.b2b.entity.Order;
+ import com.eegoo.b2b.entity.OrderProduct;
+ import com.eegoo.b2b.entity.Product;
+ import com.eegoo.b2b.entity.ProductStock;
+@@ -315,7 +314,7 @@
+ 		if (Product.PricingTypeEnum.floating.getCode().intValue() == orderProduct.getPricingType()) {
+ 			
+ 			if (saleGoldPrice==null) {
+-				throw new ServiceException(ExceptionConstant.BUS_DATA_NULL.getKey(),"商品编号"+orderProduct.getProductCode()+"为计价商品，商品未销售定价！");
++				throw new ServiceException(ExceptionConstant.BUS_DATA_NULL.getKey(),"商品编号"+orderProduct.getProductCode()+"为计价商品，金价不能为空！");
+ 			}
+ 			// 1 按克重-------------------------------------计价-工费按克：商品总重*（销售金价+基本工费+附加工费）=销售价格
+ 			if (NumberConstants.NUM_1 == orderProduct.getProcessingFeeType()) {
+@@ -349,7 +348,7 @@
+ 		product.setId(stockoutProduct.getProductId());
+ 		product =productDao.getProduct(product);
+ 		String fineness_id = product.getProductPureMetal().getFinenessId();
+-		// Double saleGoldPrice =ProductBaseDataUtil.getFinenessPrice(fineness_id); // 修改销售订单定价
++		Double saleGoldPrice =ProductBaseDataUtil.getFinenessPrice(fineness_id);
+ 		
+ 		//要出的数量
+ 		long toOutQuantity = stockoutProduct.getQuantity();
+@@ -377,14 +376,13 @@
+ 				soopr=new StockOutOrderProductRel();
+ 				soopr.setStockOutProductId(stockoutProduct.getId());
+ 				soopr.setOrderProductId(orderProduct.getId());
+-				// soopr.setSaleGoldPrice(saleGoldPrice);
++				soopr.setSaleGoldPrice(saleGoldPrice);
+ 				soopr.setType(Constants.STOCK_OUT_TYPE_SALE);
+ 				soopr.setCreateDate(DateUtil.getTimestamp());
+ 				if (leftQuantity>=toOutQuantity) {			//出完
+ 					temProduct.setStockOutQuantity(outQuantity+toOutQuantity);
+ 					//销售价格
+-					// temProduct.setTotalSalePrice(getAmount(orderProduct,toOutWeight,toOutQuantity,saleGoldPrice)); // 修改订单定价
+-					temProduct.setTotalSalePrice(getAmount(orderProduct,toOutWeight,toOutQuantity,orderProduct.getGoldPrice()));
++					temProduct.setTotalSalePrice(getAmount(orderProduct,toOutWeight,toOutQuantity,saleGoldPrice));
+ 					temProduct.setTotalWeight(BigNumber.add(totalWeight, toOutWeight));
+ 					orderProductService.update(temProduct);   //更新订单商品出库数量/ 销售价格  出库重量
+ 					//本次已发数量
+@@ -399,8 +397,7 @@
+ 					temProduct.setStockOutQuantity(orderProduct.getQuantity());
+ 					double outWeight=pieceWeight*leftQuantity;
+ 					temProduct.setTotalWeight(BigNumber.add(totalWeight,outWeight ));
+-					// temProduct.setTotalSalePrice(getAmount(orderProduct,outWeight,leftQuantity,saleGoldPrice)); // 修改订单定价
+-					temProduct.setTotalSalePrice(getAmount(orderProduct,toOutWeight,toOutQuantity,orderProduct.getGoldPrice()));
++					temProduct.setTotalSalePrice(getAmount(orderProduct,outWeight,leftQuantity,saleGoldPrice));
+ 					orderProductService.update(temProduct);   //更新订单商品出库数量/ 销售价格  出库重量
+ 					toOutQuantity-=leftQuantity;
+ 					toOutWeight=BigNumber.sub(toOutWeight, pieceWeight*leftQuantity);
+@@ -431,30 +428,20 @@
+ 				throw new ServiceException(ExceptionConstant.BUS_DATA_ERROR);
+ 				//return "审核失败，单据信息不完整！";
+ 			}
+-			// 验证是否定价
++			//更新单据状态
++			stockOutNote.setAuditStatus(Integer.valueOf(auditStatus));
++			super.update(stockOutNote);
+ 			OrderProductBO orderProductBO=new OrderProductBO();
+ 			orderProductBO.setWarehouseId(stockOutNote.getWarehouseId());
+ 			orderProductBO.setOrderCodes(stockOutNote.getOrderCodes());
+ 			orderProductBO.setForStockOut(EnumConstants.yes.code);
++			//获得该出库单可以出库的商品列表 数量
++			Map<String,List<OrderProduct>> productMap = new HashMap<String,List<OrderProduct>>();
+ 			List<OrderProduct> rows = orderProductDao.searchStockOutProduct(orderProductBO, null, null);
+ 			if (rows==null || rows.size()==0) {
+ 				throw new ServiceException(ExceptionConstant.BUS_DATA_NULL.getKey(),"没有可以出库的商品数据");
+ 			}
+-			
+-			//获得该出库单可以出库的商品列表 数量
+-			Map<String,List<OrderProduct>> productMap = new HashMap<String,List<OrderProduct>>();
+-			String currOrderId = ""; // 当前的orderid
+ 			for (OrderProduct orderProduct : rows) {
+-				// 验证是否定价
+-				if("".equals(currOrderId) || !currOrderId.equals(orderProduct.getOrderId())){
+-					Order order = orderService.get(orderProduct.getOrderId());
+-					currOrderId = order.getId();
+-					if (!(2 == order.getAuditPrice() && orderProduct.getGoldPrice() != null)) {
+-						logger.info("审核失败，订单为("+order.getCode()+")未销售定价");
+-						throw new ServiceException(ExceptionConstant.BUS_DATA_NULL.getKey(),"审核失败，订单为("+order.getCode()+")未销售定价");
+-					}
+-				}
+-				
+ 				String productStandardId = orderProduct.getProductStandardId();
+ 				List<OrderProduct> l = productMap.get(productStandardId);
+ 				if (l != null && l.size() > 0) {
+@@ -465,13 +452,6 @@
+ 					productMap.put(productStandardId, opl);
+ 				}
+ 			}
+-			
+-			
+-			//更新单据状态
+-			stockOutNote.setAuditStatus(Integer.valueOf(auditStatus));
+-			super.update(stockOutNote);
+-			
+-			
+ 			//获取商品Id
+ 			if("1".equals(auditStatus)){ //审核通过
+ 				StockOutProductBO stockOutProductBO = new StockOutProductBO();
+Index: src/com/eegoo/b2b/service/impl/MemberAccountHistoryServiceImpl.java
+===================================================================
+--- src/com/eegoo/b2b/service/impl/MemberAccountHistoryServiceImpl.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/service/impl/MemberAccountHistoryServiceImpl.java	(.../pzh/b2b)	(revision 14072)
+@@ -56,7 +56,6 @@
+  */
+ @Service("memberAccountHistoryService")
+ public class MemberAccountHistoryServiceImpl extends BaseServiceImpl<MemberAccountHistory> implements MemberAccountHistoryService {
+-
+ 	private static final Logger logger = LoggerFactory.getLogger(MemberAccountHistoryServiceImpl.class);
+ 
+ 	@Autowired
+Index: src/com/eegoo/b2b/service/impl/CourseServiceImpl.java
+===================================================================
+--- src/com/eegoo/b2b/service/impl/CourseServiceImpl.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/service/impl/CourseServiceImpl.java	(.../pzh/b2b)	(revision 14072)
+@@ -434,7 +434,7 @@
+ 	/**
+ 	 * 统计前几课程
+ 	 * {@inheritDoc}
+-	 * @see com.eegoo.b2b.service.CourseService#getTopCourse(com.eegoo.b2b.bo.CourseBO)
++	 * @see com.eegoo.b2b.service.CourseService#topCourse(com.eegoo.b2b.bo.CourseBO)
+ 	 */
+ 	public List<Course> getTopCourse(CourseBO courseBO) {
+ 	//需要热销排行前几则传入具体参数  (默认1)
+Index: src/com/eegoo/b2b/service/PayService.java
+===================================================================
+--- src/com/eegoo/b2b/service/PayService.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/service/PayService.java	(.../pzh/b2b)	(revision 14072)
+@@ -36,6 +36,7 @@
+ package com.eegoo.b2b.service;
+ 
+ import java.util.Map;
++
+ import javax.servlet.http.HttpServletRequest;
+ 
+ import org.springframework.ui.Model;
+@@ -53,6 +54,16 @@
+ public interface PayService extends BaseService<Pay> {
+  
+ 	public Pagination search(PayBO payBO);
++	
++	/**
++	 * 添加支付记录
++	 * @param amount  金额
++	 * @param bankId	银行Id
++	 * @param member	会员
++	 * @param orderNo	订单编号
++	 * @param type	 支付类型（充值、订单支付）
++	 * @return
++	 */
+ 	public Map<String,String> addPay(double amount,String bankId,Member member,String orderNo,long type);
+ 	
+ 	/**
+@@ -80,6 +91,12 @@
+ 	 */
+ 	public void addOrderPay(Model model,HttpServletRequest request,Member member,String bankId,String orderId)throws Exception;
+ 	
+-	
++	/**
++	 * 支付回调函数
++	 * @param request
++	 * @param payNo
++	 * @param amount
++	 * @throws Exception
++	 */
+ 	public void updatePayCallBack(HttpServletRequest request,String payNo,double amount) throws Exception;
+ }
+\ No newline at end of file
+Index: src/com/eegoo/b2b/service/OrderProductService.java
+===================================================================
+--- src/com/eegoo/b2b/service/OrderProductService.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/service/OrderProductService.java	(.../pzh/b2b)	(revision 14072)
+@@ -101,13 +101,6 @@
+     * @return
+     */
+    List<OrderProduct> getTopSaleProduct(OrderProductBO orderProductBO);
+-   
+-   /**
+-    * 更新销售定价
+-    * @param finenessId
+-    * @param GoldPrice
+-    */
+-   public void updateGoldPrice(String orderId,String finenessId,Double GoldPrice);
+ 
+ 
+ }
+\ No newline at end of file
+Index: src/com/eegoo/b2b/dao/ProductDao.java
+===================================================================
+--- src/com/eegoo/b2b/dao/ProductDao.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/dao/ProductDao.java	(.../pzh/b2b)	(revision 14072)
+@@ -83,6 +83,7 @@
+ 	 */
+ 	List<Product> getProducts(List<String> pids);
+ 	
++
+ 	/**
+ 	 * 简单查询商品
+ 	 * @param productBO
+Index: src/com/eegoo/b2b/dao/OrderDao.java
+===================================================================
+--- src/com/eegoo/b2b/dao/OrderDao.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/dao/OrderDao.java	(.../pzh/b2b)	(revision 14072)
+@@ -51,15 +51,6 @@
+ public interface OrderDao extends BaseDao<Order> {
+ 
+ 	List<Order> search(@Param("orderBO") OrderBO orderBO, @Param("offset") Integer offset, @Param("limit") Integer limit);
+-	
+-	/**
+-	 * 查询销售订单定价
+-	 * @param id orderId
+-	 * @param offset
+-	 * @param limit
+-	 * @return
+-	 */
+-	Order searchPrice(@Param("id") String id);
+ 
+ 	Long count(@Param("orderBO") OrderBO orderBO);
+ 	
+Index: src/com/eegoo/b2b/dao/MemberDao.java
+===================================================================
+--- src/com/eegoo/b2b/dao/MemberDao.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/dao/MemberDao.java	(.../pzh/b2b)	(revision 14072)
+@@ -58,13 +58,8 @@
+ 	Long countList(@Param("memberBO") MemberBO memberBO);
+ 
+ 	Member getByUsername(@Param("username") String username);
+-	/**
+-	 * 根据手机或者用户名获取用户
+-	 * @param member
+-	 * @return
+-	 */
+ 	List<Member> getForLogin(@Param("member") Member member);
+-	
++
+ 	void updateDeposit(@Param("memberId") String memberId, @Param("deposit") Double deposit);
+ 
+ 	/**
+Index: src/com/eegoo/b2b/dao/impl/OrderDaoImpl.xml
+===================================================================
+--- src/com/eegoo/b2b/dao/impl/OrderDaoImpl.xml	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/dao/impl/OrderDaoImpl.xml	(.../pzh/b2b)	(revision 14072)
+@@ -20,17 +20,6 @@
+     	<result column="remarks" property="remarks" />
+     	<result column="dueAmount" property="dueAmount" />
+     	<result column="realAmount" property="realAmount" />
+-    	
+-    	<result column="priceOperator" property="priceOperator" />
+-    	<result column="priceDescription" property="priceDescription" />
+-    	<result column="priceDate" property="priceDate" />
+-    	<result column="auditPrice" property="auditPrice" />
+-    	<result column="auditPriceDate" property="auditPriceDate" />
+-    	<result column="auditOperator" property="auditOperator" />
+-    	<result column="auditDescription" property="auditDescription" />
+-    	<result column="currGoldPrice" property="currGoldPrice" />
+-    	<result column="priceGoldPrice" property="priceGoldPrice" />
+-    	
+     	<collection property="orderProducts" ofType="com.eegoo.b2b.entity.OrderProduct">
+ 	    	<result column="categoryId" property="categoryId"/>
+ 	    	<result column="productId" property="productId"/>
+@@ -52,9 +41,6 @@
+ 	    	<result column="pricingType" property="pricingType" /> 
+ 	    	<result column="processingFee" property="processingFee" /> 
+ 	    	<result column="priceRange" property="priceRange" />
+-	    	
+-	    	<result column="fineness_id" property="finenessId" /> 
+-	    	<result column="gold_price" property="goldPrice" />
+     	</collection>
+     </resultMap>
+     
+@@ -99,14 +85,14 @@
+             transport_fee, insurance_fee, extra_charge, discount_rate, discount_amount, 
+             notes, remarks, create_date, create_by, update_date, 
+             update_by, status, is_delete, due_amount, real_amount, 
+-            due_material, real_material,curr_gold_price
++            due_material, real_material
+         ) VALUES (#{id},
+             #{code}, #{memberId}, #{memberUsername}, #{paymentType}, #{deliveryType}, 
+             #{deliveryAddress}, #{receiver}, #{receiverTel}, #{postcode}, #{description}, 
+             #{transportFee}, #{insuranceFee}, #{extraCharge}, #{discountRate}, #{discountAmount}, 
+             #{notes}, #{remarks}, #{createDate}, #{createBy}, #{updateDate}, 
+             #{updateBy}, #{status}, #{isDelete}, #{dueAmount}, #{realAmount}, 
+-            #{dueMaterial}, #{realMaterial},#{currGoldPrice}
++            #{dueMaterial}, #{realMaterial}
+         )
+     </insert>
+ 
+@@ -139,17 +125,6 @@
+             <if test="realAmount != null"> real_amount = #{realAmount}, </if>
+             <if test="dueMaterial != null and dueMaterial != ''"> due_material = #{dueMaterial}, </if>
+             <if test="realMaterial != null and realMaterial != ''"> real_material = #{realMaterial}, </if>
+-            
+-            <if test="priceOperator != null"> price_operator = #{priceOperator}, </if>
+-            <if test="priceDescription != null"> price_description = #{priceDescription}, </if>
+-            <if test="priceDate != null"> price_date = #{priceDate}, </if>
+-            <if test="auditPrice != null"> audit_price = #{auditPrice},</if>
+-             <if test="auditPriceDate != null"> audit_priceDate = #{auditPriceDate},</if>
+-            <if test="auditOperator != null"> audit_operator = #{auditOperator}, </if>
+-            <if test="auditDescription != null"> audit_description = #{auditDescription}, </if>
+-             <if test="currGoldPrice != null"> curr_gold_price = #{currGoldPrice}, </if>
+-             <if test="priceGoldPrice != null"> price_gold_price = #{priceGoldPrice}, </if>
+-            
+         </set>
+         <where>
+     		<if test="id != null and id !='' ">
+@@ -189,38 +164,21 @@
+ 			 o.delivery_type AS deliveryType, o.delivery_address AS deliveryAddress, o.receiver, o.receiver_tel AS receiverTel, o.postcode, 
+ 			o.description, o.transport_fee AS transportFee,o.extra_charge AS extraCharge, o.insurance_fee AS insuranceFee, o.discount_rate AS discountRate, 
+ 			o.discount_amount AS discountAmount, o.notes, o.remarks, o.create_date AS createDate, o.create_by AS createBy, 
+-			o.update_date AS updateDate, o.update_by AS updateBy, o.`status`, o.is_delete AS isDelete,due_amount AS dueAmount,real_amount AS realAmount,
+-			o.due_material AS dueMaterial, o.real_material AS realMaterial,
+-			o.price_operator AS priceOperator, o.price_description AS priceDescription, o.price_date AS priceDate, o.audit_price AS auditPrice, o.audit_priceDate AS auditPriceDate, 
+-			o.audit_operator AS auditOperator, o.audit_description AS auditDescription, o.curr_gold_price AS currGoldPrice, o.price_gold_price AS priceGoldPrice
++			o.update_date AS updateDate, o.update_by AS updateBy, o.`status`, o.is_delete AS isDelete,due_amount AS dueAmount,real_amount AS realAmount
++			,o.due_material AS dueMaterial, o.real_material AS realMaterial
+ 		FROM `order` AS o 
+ 		LEFT JOIN order_product AS op ON o.id = op.order_id
+     </sql>
+-    
+-    <sql id="selectPriceFields">
+-		SELECT DISTINCT o.id AS ID, o.`code`, o.member_id AS memberId, o.member_username AS memberUsername,
+-			o.price_operator AS priceOperator, o.price_description AS priceDescription, o.price_date AS priceDate, o.audit_price AS auditPrice, o.audit_priceDate AS auditPriceDate, 
+-			o.audit_operator AS auditOperator, o.audit_description AS auditDescription, o.curr_gold_price AS currGoldPrice,o.price_gold_price AS priceGoldPrice,
+-			o.discount_rate AS discountRate, o.discount_amount AS discountAmount, o.extra_charge AS extraCharge
+-		FROM `order` AS o
+-    </sql>
+ 
+     <select id="search" resultType="Order">
+         <include refid="selectAllFields" />
+         <include refid="searchWhere" />
+          order by o.create_date desc
+          <if test="offset != null and limit != null ">
+-			LIMIT   #{offset}  ,  #{limit}
++			LIMIT   #{offset}  ,  #{limit} 
+ 		</if>
+     </select>
+     
+-    <select id="searchPrice" resultType="Order">
+-        <include refid="selectPriceFields" />
+-        WHERE o.id = #{id}
+-    </select>
+-    
+-    
+-    
+      <!-- order 联合 order_product 查询 -->
+     <select id="searchForOrderId" resultMap="orderProduct_Map" >
+     	SELECT o.id ,o.code as code,o.status as status ,o.create_date as createDate,o.transport_fee as transportFee,o.insurance_fee as insuranceFee,ot.order_id ,
+@@ -230,10 +188,7 @@
+ 			   ot.weight_unit AS weightUnit,ot.color as color ,ot.sale_price as salePrice, ot.quantity as quantity,ot.description,o.remarks,
+ 			   ot.processing_fee_type as processingFeeType, ot.extra_charge as extraCharge, ot.base_charge as baseCharge, 
+ 			   ot.weight_standard as weightStandard,ot.product_standard_id AS productStandardId, ot.pricing_type as pricingType, ot.processing_fee as processingFee, ot.price_range as priceRange,
+-			   p.is_boutique as isBoutique,
+-			   o.price_operator AS priceOperator, o.price_description AS priceDescription, o.price_date AS priceDate, o.audit_price AS auditPrice, o.audit_priceDate AS auditPriceDate, 
+-			   o.audit_operator AS auditOperator, o.audit_description AS auditDescription,  o.curr_gold_price AS currGoldPrice,o.price_gold_price AS priceGoldPrice,
+-			   ot.fineness_id AS finenessId, ot.gold_price AS goldPrice
++			   p.is_boutique as isBoutique
+ 			   FROM `order` as o LEFT JOIN `order_product` as ot 
+ 			   ON o.id = ot.order_id
+ 			   LEFT JOIN `product` as p
+@@ -268,12 +223,6 @@
+             <if test="orderBO.endDate != null and orderBO.endDate != ''">
+                 and o.create_date &lt;= #{orderBO.endDate}
+             </if>
+-            <if test="orderBO.order.priceOperator != null and orderBO.order.priceOperator != ''">
+-                 and o.price_operator = #{priceOperator}
+-            </if>
+-            <if test="orderBO.order.auditOperator != null and orderBO.order.auditOperator != ''">
+-                 and o.audit_operator = #{auditOperator}
+-            </if>
+         </where>
+     </sql>
+ 	
+@@ -442,17 +391,6 @@
+ 		<result column="realMaterial" property="realMaterial" />
+ 		<result column="quantity" property="quantity" />
+ 		<result column="totalSalePrice" property="totalSalePrice" />
+-		
+-		<result column="priceOperator" property="priceOperator" />
+-		<result column="priceGoldPrice" property="priceGoldPrice" />
+-		<result column="priceDescription" property="priceDescription" /> 
+-		<result column="priceDate" property="priceDate" />
+-		<result column="auditOperator" property="auditOperator" />
+-		<result column="auditPrice" property="auditPrice" /> 
+-		<result column="auditPriceDate" property="auditPriceDate" /> 
+-		<result column="auditDescription" property="auditDescription" /> 
+-		<result column="currGoldPrice" property="currGoldPrice" /> 
+-		
+ 		<association property="deliverAddress" javaType="com.eegoo.b2b.entity.OrderDeliverAddress">
+ 			<result column="address" property="address" />  
+ 			<result column="phone" property="phone" />  
+@@ -474,10 +412,7 @@
+ 			
+ 			 @discount_rate := IF(o.discount_rate IS NOT NULL ,opp.dueAmount *  o.discount_rate /100,opp.dueAmount),
+ 			@discount_amount := IF(o.discount_amount IS NOT NULL ,@discount_rate-o.discount_amount,@discount_rate),
+-			 IF ( o.extra_charge IS NOT NULL ,@discount_amount+o.extra_charge ,@discount_amount)  AS totalSalePrice,
+-			
+-			o.price_operator AS priceOperator, o.price_description AS priceDescription, o.price_date AS priceDate, o.audit_price AS auditPrice, o.audit_priceDate AS auditPriceDate,
+-			o.audit_operator AS auditOperator, o.audit_description AS auditDescription, o.curr_gold_price AS currGoldPrice,o.price_gold_price AS priceGoldPrice
++			 IF ( o.extra_charge IS NOT NULL ,@discount_amount+o.extra_charge ,@discount_amount)  AS totalSalePrice
+ 						 
+ 		FROM `order` AS o 
+ 		LEFT JOIN order_product AS op ON o.id = op.order_id
+@@ -487,6 +422,8 @@
+ 				SELECT SUM(p.total_sale_price ) AS dueAmount, Sum(p.stock_out_quantity) totalStockOutQuantity,Sum(p.total_weight) totalWeight,Sum(p.purchased_quantity) totalPurchaseQuantity,SUM(p.quantity) quantity,p.order_id
+ 						FROM order_product p WHERE p.is_delete = 0 GROUP BY p.order_id
+ 				) opp ON o.id = opp.order_id
++
++ 
+     </sql>
+ 
+     <select id="searchOrder" resultMap="orderAddressMap">
+@@ -602,12 +539,6 @@
+             <if test="orderBO.order.isDelete != null">
+                  and o.is_delete = #{orderBO.order.isDelete} 
+             </if>
+-            <if test="orderBO.order.auditPrice != null">
+-                 and o.audit_price = #{orderBO.order.auditPrice} 
+-            </if>
+-             <if test="orderBO.order.auditPriceDate != null and orderBO.order.auditPriceDate != ''">
+-                 and o.audit_priceDate = #{orderBO.order.auditPriceDate} 
+-            </if>
+             <if test="orderBO.orderStatus != null and orderBO.orderStatus.size()>0">	
+             	and o.status in 
+ 	             <foreach collection="orderBO.orderStatus" item="statu" open="(" separator="," close=")">
+Index: src/com/eegoo/b2b/dao/impl/MemberDaoImpl.xml
+===================================================================
+--- src/com/eegoo/b2b/dao/impl/MemberDaoImpl.xml	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/dao/impl/MemberDaoImpl.xml	(.../pzh/b2b)	(revision 14072)
+@@ -21,7 +21,6 @@
+  		<include refid="selectAllFields" />
+        WHERE  mobile is not null and mobile !='' and mobile=#{member.mobile} AND is_delete=0  and is_locked=1 limit 1
+     </select>
+-    
+      <select id="getChildren" parameterType="String" resultType="Member">
+         <include refid="selectAllFields" />
+         WHERE parent_id = #{parentId} and is_delete=0 
+@@ -176,7 +175,7 @@
+ 		            #{statu}
+ 		        </foreach>
+             </if>
+-            
++    	    
+             <if test="memberBO.member.parentId != null">
+                  and parent_id = #{memberBO.member.parentId} 
+             </if>
+Index: src/com/eegoo/b2b/dao/impl/OrderProductDaoImpl.xml
+===================================================================
+--- src/com/eegoo/b2b/dao/impl/OrderProductDaoImpl.xml	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/dao/impl/OrderProductDaoImpl.xml	(.../pzh/b2b)	(revision 14072)
+@@ -44,8 +44,6 @@
+ 			<result property="materialId" column="materialId" />
+ 			<result property="materialName" column="materialName" />
+ 			<result property="productStandardId" column="productStandardId" />
+-			<result property="finenessId" column="finenessId" />
+-			<result property="goldPrice" column="goldPrice" />
+ 			<association property="mainImage" javaType="com.eegoo.b2b.entity.ProductImage">
+ 				<result property="visitPath" column="visitPath" />
+ 				<result property="fileName" column="fileName" />
+@@ -103,13 +101,13 @@
+             pricing_type, material_id, material_name, size, moulding, style, color, clarity, cutting, shape, waterhead, sale_price, 
+             processing_fee, profit_margin, description, purchased_quantity, quantity, price_period_id, create_by, create_date, update_by, update_date, 
+             is_delete, product_standard_id, weight_standard, process, price_range, fineness, processing_fee_type, extra_charge, base_charge, sale_gold_price, 
+-            total_weight, stock_out_quantity, check_remark, check_result, fineness_id , gold_price
++            total_weight, stock_out_quantity, check_remark, check_result
+         ) VALUES (#{id},
+             #{orderId}, #{categoryId}, #{categoryName}, #{supplierName}, #{supplierProductCode},#{productId}, #{productCode}, #{productName}, #{productWeight}, #{weightUnit}, 
+             #{pricingType}, #{materialId}, #{materialName}, #{size}, #{moulding}, #{style}, #{color},#{clarity}, #{cutting}, #{shape}, #{waterhead}, #{salePrice}, 
+             #{processingFee}, #{profitMargin}, #{description}, #{purchasedQuantity}, #{quantity}, #{pricePeriodId}, #{createBy}, #{createDate}, #{updateBy}, #{updateDate}, 
+             #{isDelete}, #{productStandardId}, #{weightStandard}, #{process}, #{priceRange}, #{fineness}, #{processingFeeType}, #{extraCharge}, #{baseCharge}, #{saleGoldPrice}, 
+-            #{totalWeight}, #{stockOutQuantity}, #{checkRemark}, #{checkResult},#{finenessId}, #{goldPrice}
++            #{totalWeight}, #{stockOutQuantity}, #{checkRemark}, #{checkResult}
+         )
+     </insert>
+ 
+@@ -138,16 +136,9 @@
+             <if test="checkRemark != null and checkRemark != ''"> check_remark = #{checkRemark}, </if>
+             <if test="checkResult != null"> check_result = #{checkResult}, </if>
+             <if test="totalSalePrice != null"> total_sale_price = #{totalSalePrice}, </if>
+-            <if test="finenessId != null and finenessId != ''"> fineness_id = #{finenessId}, </if>
+-            <if test="goldPrice != null"> gold_price = #{goldPrice}, </if>
+         </set>
+         WHERE id = #{id}
+     </update>
+-    
+-    <update id="updateGoldPrice" parameterType="OrderProduct">
+-        UPDATE order_product set gold_price = #{goldPrice} 
+-    	where order_id = #{orderId} and fineness_id = #{finenessId}
+-    </update>
+ 
+     <delete id="delete">
+         DELETE FROM order_product
+@@ -206,8 +197,6 @@
+ 		<result property="weightStandard" column="weightStandard" />
+ 		<result property="weightUnit" column="weightUnit" />
+ 		<result property="orderCode" column="orderCode" />
+-		<result property="finenessId" column="finenessId" />
+-		<result property="goldPrice" column="goldPrice" />
+ 		<association property="product" javaType="com.eegoo.b2b.entity.Product" >
+ 			<id property="id" column="productId" />
+ 			<result column="productCategoryId" property="categoryId" />
+@@ -277,8 +266,7 @@
+             op.create_by AS createBy, op.create_date AS createDate, op.update_by AS updateBy, op.update_date AS updateDate, op.is_delete AS isDelete,
+             op.processing_fee_type as processingFeeType, op.extra_charge as extraCharge, op.base_charge as baseCharge,op.price_range as priceRange,op.fineness,op.process
+             , op.sale_gold_price AS saleGoldPrice, op.total_weight AS totalWeight, op.stock_out_quantity AS stockOutQuantity, op.check_remark AS checkRemark, op.check_result AS checkResult,
+-            o.code AS orderCode,
+-            op.fineness_id AS finenessId, op.gold_price AS goldprice
++            o.code AS orderCode
+         FROM order_product op
+         left join `order` o on o.id=op.order_id
+         left join product pr on pr.id=op.product_id
+@@ -287,7 +275,7 @@
+     <sql id="selectStockOutProductFields">
+   		select op.id as ID,o.id AS orderId, o.code AS orderCode,op.product_id as productId,op.product_code as productCode,op.product_name as productName,
+   		op.category_name as categoryName,op.pricing_type as pricingType,op.processing_fee_type as processingFeeType,op.processing_fee as processingFee,op.base_charge AS baseCharge,op.extra_charge AS extraCharge,
+-  		op.quantity as quantity,op.stock_out_quantity AS stockOutQuantity,op.sale_price AS salePrice,op.total_sale_price as totalSalePrice,op.gold_price AS goldPrice, op.fineness_id AS finenessId,
++  		op.quantity as quantity,op.stock_out_quantity AS stockOutQuantity,op.sale_price AS salePrice,op.total_sale_price as totalSalePrice,
+   		psd.weight_standard as weightStandard,op.total_weight AS totalWeight, 
+   		ps.product_standard_id as productStandardId,ps.id AS productStockId,
+   		<if test="orderProductBO.isGroup != null " >
+@@ -421,9 +409,6 @@
+             <if test="orderProductBO.orderProduct.orderId != null and orderProductBO.orderProduct.orderId != ''">
+                  and op.order_id = #{orderProductBO.orderProduct.orderId} 
+             </if>
+-            <if test="orderProductBO.orderId != null and orderProductBO.orderId != ''">
+-                 and op.order_id = #{orderProductBO.orderId} 
+-            </if>
+             <if test="orderProductBO.orderProduct.categoryId != null and orderProductBO.orderProduct.categoryId != ''">
+                  and op.category_id = #{orderProductBO.orderProduct.categoryId} 
+             </if>
+@@ -469,12 +454,6 @@
+             <if test="orderProductBO.orderProduct.fineness != null and orderProductBO.orderProduct.fineness != '' ">
+                  and op.fineness = #{orderProductBO.orderProduct.fineness} 
+             </if>
+-            <if test="orderProductBO.orderProduct.finenessId != null and orderProductBO.orderProduct.finenessId != '' ">
+-                 and op.fineness_id = #{orderProductBO.orderProduct.finenessId} 
+-            </if>
+-            <if test="orderProductBO.orderProduct.goldPrice != null and orderProductBO.orderProduct.goldPrice != '' ">
+-                 and op.gold_price = #{orderProductBO.orderProduct.goldPrice} 
+-            </if>
+         </where>
+     </sql>
+     <delete id="deleteNotIn">
+Index: src/com/eegoo/b2b/dao/impl/ProductDaoImpl.xml
+===================================================================
+--- src/com/eegoo/b2b/dao/impl/ProductDaoImpl.xml	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/dao/impl/ProductDaoImpl.xml	(.../pzh/b2b)	(revision 14072)
+@@ -456,6 +456,7 @@
+         </foreach> 
+     </select>
+     
++    
+     <select id="searchForLucene" resultMap="product_map" >
+     	SELECT product.id,product.sales AS productSales,
+        		product.shelf_date AS shelfDate,product.off_shelf_date AS offshelfDate,
+Index: src/com/eegoo/b2b/dao/OrderProductDao.java
+===================================================================
+--- src/com/eegoo/b2b/dao/OrderProductDao.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/dao/OrderProductDao.java	(.../pzh/b2b)	(revision 14072)
+@@ -127,13 +127,6 @@
+ 	 * @return
+ 	 */
+ 	List<OrderProduct> getStatCustomProductReport(@Param("orderProductBO") OrderProductBO orderProductBO);
+-	
+-	/**
+-    * 更新销售定价
+-    * @param finenessId
+-    * @param GoldPrice
+-    */
+-	void updateGoldPrice(@Param("orderId")String orderId,@Param("finenessId")String finenessId,@Param("goldPrice")Double goldPrice);
+     
+ 
+ }
+\ No newline at end of file
+Index: src/com/eegoo/b2b/entity/C_ABCPay.java
+===================================================================
+--- src/com/eegoo/b2b/entity/C_ABCPay.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/entity/C_ABCPay.java	(.../pzh/b2b)	(revision 14072)
+@@ -95,6 +95,7 @@
+ 	
+ 	
+ 	public Map<String ,String> submitPay(){
++		System.out.println("---------------------------------------------C_ABCPay ------submitPay-----start----");
+ 		Map<String,String> resultParam = new HashMap<String,String>();
+ 		
+ 		//1、生成订单对象
+@@ -122,8 +123,11 @@
+ 		tPaymentRequest.setMerchantRemarks(this.merchantRemarks); //设定商户备注信息
+ 		tPaymentRequest.setPaymentLinkType(this.paymentLinkType);//设定支付接入方式
+ 		
++		System.out.println("---------------------------------------------C_ABCPay ------submitPay-----extendPostRequest----");
+ 		//4、传送支付请求并取得支付网址
+ 		TrxResponse tTrxResponse = tPaymentRequest.extendPostRequest(1);
++		System.out.println("---------------------------------------------tTrxResponse.isSuccess()" + resultParam);
++		System.out.println("---------------------------------------------Url-----------" + this.resultNotifyURL);
+ 		if (tTrxResponse.isSuccess()) {
+ 			//5、支付请求提交成功，将客户端导向支付页面
+ 			resultParam.put("isSuccess", "1");
+@@ -211,7 +215,7 @@
+ 
+ 	@Override
+ 	public void setPayDate(Date date) {
+-		this.orderDate = DateUtil.toDateTimeString(date,"YYYY/MM/dd"); 
++		this.orderDate = DateUtil.toDateTimeString(date,"yyyy/MM/dd"); 
+ 		this.orderTime = DateUtil.toDateTimeString(date,"hh:mm:ss");
+ 	}
+ 	
+Index: src/com/eegoo/b2b/entity/M_ABCPay.java
+===================================================================
+--- src/com/eegoo/b2b/entity/M_ABCPay.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/entity/M_ABCPay.java	(.../pzh/b2b)	(revision 14072)
+@@ -78,21 +78,25 @@
+ 
+ 	
+ 	public Map<String ,String> submitPay(){
++		System.out.println("---------------------------------------------M_ABCPay ------submitPay-----start----");
+ 		Map<String,String> resultParam = new HashMap<String,String>();
+ 		//1、生成TrnxInfo对象
+ 		TrnxItems trnxitems = new TrnxItems();
+-		
++		System.out.println("---------------------------------------------M_ABCPay ------submitPay-----TrnxItems----");
+ 		TrnxRemarks trnxRemarks = new TrnxRemarks();
+ 		trnxRemarks.addTrnxRemark(new TrnxRemark("客户注册信息", this.regInfo));
+ 		trnxRemarks.addTrnxRemark(new TrnxRemark("商品信息", this.proInfo));
++		System.out.println("---------------------------------------------M_ABCPay ------submitPay-----trnxRemarks----");
+ 		
+ 		TrnxInfo trnxInfo = new TrnxInfo();
+ 		trnxInfo.setTrnxOpr(this.regInfo);
+ 		trnxInfo.setTrnxItems(trnxitems);
+ 		trnxInfo.setTrnxRemarks(trnxRemarks);
++		System.out.println("---------------------------------------------M_ABCPay ------submitPay-----TrnxInfo----");
+ 		
+ 		//2、生成直接支付请求对象
+ 		FundTransferRequest tFundTransferRequest = new FundTransferRequest();
++		System.out.println("---------------------------------------------M_ABCPay ------submitPay-----FundTransferRequest----");
+ 		tFundTransferRequest.setTrnxInfo(trnxInfo); //设定交易细项
+ 		tFundTransferRequest.setMerchantTrnxNo(this.trnxNo);//设定商户交易编号
+ 		tFundTransferRequest.setTrnxAmount(this.trnxAmount); //设定交易金额
+@@ -104,8 +108,11 @@
+ 		tFundTransferRequest.setResultNotifyURL(this.resultNotifyURL);//设定交易结果回传网址
+ 		tFundTransferRequest.setMerchantRemarks(this.merchantRemarks);//设定商户备注信息
+ 		
++		System.out.println("---------------------------------------------M_ABCPay ------postRequest---------");
+ 		//3.传送直接支付请求并取得支付网址
+ 		TrxResponse tTrxResponse = tFundTransferRequest.postRequest();
++		System.out.println("---------------------------------------------tTrxResponse.isSuccess()" + resultParam);
++		System.out.println("---------------------------------------------Url-----------" + this.resultNotifyURL);
+ 		if (tTrxResponse.isSuccess()) {
+ 			resultParam.put("isSuccess", "1");
+ 			//4、直接支付请求提交成功,将客户端导向出示买方企业客户证书页面（下面注释的4行程序的参数值商户仍然可以取到）
+@@ -120,8 +127,6 @@
+ 			resultParam.put("returnCode", tTrxResponse.getReturnCode());
+ 			resultParam.put("message", tTrxResponse.getErrorMessage());
+ 		}
+-		System.out.println("---------------------------------------------tTrxResponse.isSuccess()" + resultParam);
+-		System.out.println("---------------------------------------------Url-----------" + this.resultNotifyURL);
+ 		return resultParam;
+ 	}
+ 
+@@ -201,7 +206,7 @@
+ 
+ 	@Override
+ 	public void setPayDate(Date date) {
+-		this.trnxDate = DateUtil.toDateTimeString(date,"YYYY/MM/dd"); 
++		this.trnxDate = DateUtil.toDateTimeString(date,"yyyy/MM/dd"); 
+ 		this.trnxTime = DateUtil.toDateTimeString(date,"hh:mm:ss");
+ 	}
+ 
+Index: src/com/eegoo/b2b/entity/ProductBrand.java
+===================================================================
+--- src/com/eegoo/b2b/entity/ProductBrand.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/entity/ProductBrand.java	(.../pzh/b2b)	(revision 14072)
+@@ -38,7 +38,6 @@
+ import java.util.List;
+ 
+ import com.eegoo.b2b.util.Constants;
+-
+ /**
+  * <pre>
+  * 实体类
+@@ -199,7 +198,6 @@
+ 	public void setStringId(String stringId) {
+ 		this.stringId = stringId;
+ 	}
+-	
+ 	public String getImage_S() {
+ 		return "product/product/brand/"+this.getId()+"/brand_s.jpg";
+ 	}
+Index: src/com/eegoo/b2b/entity/C_CCBPay.java
+===================================================================
+--- src/com/eegoo/b2b/entity/C_CCBPay.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/entity/C_CCBPay.java	(.../pzh/b2b)	(revision 14072)
+@@ -295,10 +295,12 @@
+ 	@Override
+ 	public void setPayDate(Date date) {
+ 		// TODO Auto-generated method stub
+-		
+ 	}
++
+ 	@Override
+ 	public void setPayBankUrl(String bankUrl) {
++		// TODO Auto-generated method stub
++		
+ 	}
+ 	
+ }
+Index: src/com/eegoo/b2b/entity/OrderProduct.java
+===================================================================
+--- src/com/eegoo/b2b/entity/OrderProduct.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/entity/OrderProduct.java	(.../pzh/b2b)	(revision 14072)
+@@ -289,21 +289,11 @@
+ 	 * 工艺
+ 	 */
+ 	private String process;
+-	
+-	/**
+-	 * 成色id
+-	 */
+-	private String finenessId;
+ 
+ 	/**
+ 	 * 成色
+ 	 */
+ 	private String fineness;
+-	
+-	/**
+-	 * 销售最终定价
+-	 */
+-	private Double goldPrice;
+ 
+ 	/**
+ 	 * 销售工费类型(1 按克重 2 按件)
+@@ -898,22 +888,4 @@
+ 	public void setStockQuantity(Long stockQuantity) {
+ 		this.stockQuantity = stockQuantity;
+ 	}
+-
+-	public String getFinenessId() {
+-		return finenessId;
+-	}
+-
+-	public void setFinenessId(String finenessId) {
+-		this.finenessId = finenessId;
+-	}
+-
+-	public Double getGoldPrice() {
+-		return goldPrice;
+-	}
+-
+-	public void setGoldPrice(Double goldPrice) {
+-		this.goldPrice = goldPrice;
+-	}
+-	
+-	
+ }
+\ No newline at end of file
+Index: src/com/eegoo/b2b/entity/M_CCBPay.java
+===================================================================
+--- src/com/eegoo/b2b/entity/M_CCBPay.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/entity/M_CCBPay.java	(.../pzh/b2b)	(revision 14072)
+@@ -10,11 +10,6 @@
+ 
+ import CCBSign.RSASig;
+ 
+-/**
+- * 建设银行
+- * @author Administrator
+- *
+- */
+ public class M_CCBPay extends OnlinePay {
+ 
+ 	/**
+@@ -258,7 +253,6 @@
+ 	@Override
+ 	public void setPayDate(Date date) {
+ 		// TODO Auto-generated method stub
+-		
+ 	}
+ 
+ 	@Override
+Index: src/com/eegoo/b2b/entity/Order.java
+===================================================================
+--- src/com/eegoo/b2b/entity/Order.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/entity/Order.java	(.../pzh/b2b)	(revision 14072)
+@@ -104,18 +104,8 @@
+ 		/**
+ 		 * 已完成订单
+ 		 */
+-		YWC(50L, "已完成订单", Arrays.asList(Status.YWC.toString())),
+-		
+-		/**
+-		 * 可定价(定价列表查询条件)
+-		 */
+-		KDJ(51L, "可定价", Arrays.asList(Status.SHCG.toString(),Status.DFK.toString(), Status.YQS.toString(), Status.YWC.toString()));
+-		
+-		
+-		/**
+-		 * 销售订单 筛选条件
+-		 */
+-		
++		YWC(50L, "已完成订单", Arrays.asList(Status.YWC.toString()));
++
+ 		private Long code;
+ 		private String name;
+ 
+@@ -164,99 +154,7 @@
+ 		}
+ 
+ 	}
+-	
+-	
+-	public enum AuditPriceStatus {
+-		/**
+-		 * 未定价
+-		 */
+-		WDJ(0L, "未定价","未定价"),
+-		/**
+-		 * 未审核
+-		 */
+-		WSH(1L, "未审核","未审核"),
+-		/**
+-		 * 审核通过
+-		 */
+-		YTG(2L, "审核通过","审核通过"),
+-		/**
+-		 * 审核不通过
+-		 */
+-		WTG(3L, "审核不通过","审核不通过");
+-		
+-		private Long code;
+-		/**
+-		 * 后台使用
+-		 * 
+-		 * @see Order#getStatusName()
+-		 */
+-		private String name;
+-		/**
+-		 * 前台使用
+-		 * 
+-		 * @see Order#getStatusAlias()
+-		 */
+-		private String alias;
+ 
+-		private AuditPriceStatus(Long code, String name, String alias) {
+-			this.code = code;
+-			this.name = name;
+-			this.alias = alias;
+-		}
+-
+-		public static AuditPriceStatus toAuditPriceStatus(Long code) {
+-			AuditPriceStatus result = null;
+-			for (AuditPriceStatus status : AuditPriceStatus.values()) {
+-				if (status.getCode().equals(code)) {
+-					result = status;
+-					break;
+-				}
+-			}
+-
+-			return result;
+-		}
+-
+-		public static String getName(Long code) {
+-			String result = null;
+-			for (Status status : Status.values()) {
+-				if (status.getCode().equals(code)) {
+-					result = status.getName();
+-					break;
+-				}
+-			}
+-
+-			return result;
+-		}
+-
+-		public static String getAlias(Long code) {
+-			String result = null;
+-			for (AuditPriceStatus status : AuditPriceStatus.values()) {
+-				if (status.getCode().equals(code)) {
+-					result = status.getAlias();
+-					break;
+-				}
+-			}
+-
+-			return result;
+-		}
+-
+-		public Long getCode() {
+-			return code;
+-		}
+-
+-		public String getName() {
+-			return name;
+-		}
+-
+-		public String getAlias() {
+-			return alias;
+-		}
+-
+-		public String toString() {
+-			return code.toString();
+-		}
+-	}
+-
+ 	/**
+ 	 * <pre>
+ 	 * 	订单状态
+@@ -696,61 +594,6 @@
+ 	 * 商品总额,出库单金额累计总额
+ 	 */
+ 	private Double totalSalePrice;
+-	
+-	/**
+-	 * 订单定价人（用户id）
+-	 * price_operator
+-	 */
+-	private String priceOperator;
+-	
+-	/**
+-	 * 订单定价备注
+-	 * price_description
+-	 */
+-	private String priceDescription;
+-	
+-	/**
+-	 * 订单定价备注
+-	 * price_date
+-	 */
+-	private String priceDate;
+-	
+-	/**
+-	 * 订单定价审核状态：0 新建 1审核通过 2审核失败
+-	 * audit_price
+-	 */
+-	private Integer auditPrice;
+-	
+-	/**
+-	 * 订单定价审核人(用户Id)
+-	 * audit_operator
+-	 */
+-	private String auditOperator;
+-	
+-	/**
+-	 * 订单定价审核时间
+-	 * audit_priceDate
+-	 */
+-	private String auditPriceDate;
+-	
+-	/**
+-	 * 订单定价审核备注
+-	 * audit_description
+-	 */
+-	private String auditDescription;
+-	
+-	/**
+-	 * 下单日金价
+-	 * curr_gold_price
+-	 */
+-	private String currGoldPrice;
+-	
+-	/**
+-	 * 销售定价字符串
+-	 * 格式：finenessId:price,finenessId:price,finenessId:price
+-	 * price_gold_price
+-	 */
+-	private String priceGoldPrice;
+ 
+ 	public String getRealMaterial() {
+ 		return realMaterial;
+@@ -1165,83 +1008,11 @@
+ 	 * @return
+ 	 */
+ 	public Boolean getIsSign(){
+-		if(getStatus() != null && (Status.DFK.getCode()==getStatus()) && getTotalStockOutQuantity() != null && getTotalStockOutQuantity() > 0)
++		 if(getStatus() != null && (Status.DFK.getCode()==getStatus()) && getTotalStockOutQuantity() != null && getTotalStockOutQuantity() > 0)
+ 			 return true;
+ 		else
+ 			return false;
+ 	}
+-
+-	public String getPriceOperator() {
+-		return priceOperator;
+-	}
+-
+-	public void setPriceOperator(String priceOperator) {
+-		this.priceOperator = priceOperator;
+-	}
+-
+-	public String getPriceDescription() {
+-		return priceDescription;
+-	}
+-
+-	public void setPriceDescription(String priceDescription) {
+-		this.priceDescription = priceDescription;
+-	}
+-
+-	public String getPriceDate() {
+-		return priceDate;
+-	}
+-
+-	public void setPriceDate(String priceDate) {
+-		this.priceDate = priceDate;
+-	}
+-
+-	public Integer getAuditPrice() {
+-		return auditPrice;
+-	}
+-
+-	public void setAuditPrice(Integer auditPrice) {
+-		this.auditPrice = auditPrice;
+-	}
+-
+-	public String getAuditOperator() {
+-		return auditOperator;
+-	}
+-
+-	public void setAuditOperator(String auditOperator) {
+-		this.auditOperator = auditOperator;
+-	}
+-
+-	public String getAuditDescription() {
+-		return auditDescription;
+-	}
+-
+-	public void setAuditDescription(String auditDescription) {
+-		this.auditDescription = auditDescription;
+-	}
+-
+-	public String getCurrGoldPrice() {
+-		return currGoldPrice;
+-	}
+-
+-	public void setCurrGoldPrice(String currGoldPrice) {
+-		this.currGoldPrice = currGoldPrice;
+-	}
+-
+-	public String getPriceGoldPrice() {
+-		return priceGoldPrice;
+-	}
+-
+-	public void setPriceGoldPrice(String priceGoldPrice) {
+-		this.priceGoldPrice = priceGoldPrice;
+-	}
+-
+-	public String getAuditPriceDate() {
+-		return auditPriceDate;
+-	}
+-
+-	public void setAuditPriceDate(String auditPriceDate) {
+-		this.auditPriceDate = auditPriceDate;
+-	}
+ 	
+ 	
+ }
+\ No newline at end of file
+Index: src/com/eegoo/b2b/action/member/ShopingAction.java
+===================================================================
+--- src/com/eegoo/b2b/action/member/ShopingAction.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/action/member/ShopingAction.java	(.../pzh/b2b)	(revision 14072)
+@@ -50,7 +50,6 @@
+ import com.eegoo.b2b.service.SupplierService;
+ import com.eegoo.b2b.util.ClassUtil;
+ import com.eegoo.b2b.util.Constants;
+-import com.eegoo.b2b.util.JsonUtil;
+ import com.eegoo.b2b.util.NumberConstants;
+ import com.eegoo.b2b.util.ProductBaseDataUtil;
+ import com.eegoo.b2b.util.SerialNumber;
+@@ -541,15 +540,6 @@
+ 				order.setStatus(Status.WSH.getCode());
+ 
+ 				Map<String, StandardGoldPrice> goldOld = ProductBaseDataUtil.getFinenessPriceMap();
+-				//下单日金价
+-				if(goldOld != null){
+-					StringBuffer sf = new StringBuffer();
+-					List<StandardGoldPrice> standardGoldPricelist = JsonUtil.mapTransitionList(goldOld);
+-					for (StandardGoldPrice standardGoldPrice : standardGoldPricelist) {
+-						sf.append(standardGoldPrice.getFinenessName()).append(":").append(standardGoldPrice.getPrice()).append("元/克 ； ");
+-					}
+-					order.setCurrGoldPrice(sf.toString());
+-				}
+ 
+ 				Map<String, Double> processingFeeMap = ProductBaseDataUtil.getInstance().getStandardProcessingFeeMap();
+ 
+@@ -629,7 +619,6 @@
+ 								ProductPureMetal productPureMetal = product.getProductPureMetal();
+ 								if (productPureMetal != null) {
+ 									orderProduct.setProcess(productPureMetal.getProcessName());
+-									orderProduct.setFinenessId(productPureMetal.getFinenessId()); // 成色id
+ 									orderProduct.setFineness(productPureMetal.getFinenessName());
+ 									// 根据成色获取金价
+ //									if (productPureMetal.getFinenessId() != null) {
+Index: src/com/eegoo/b2b/action/admin/OrderProductAction.java
+===================================================================
+--- src/com/eegoo/b2b/action/admin/OrderProductAction.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/action/admin/OrderProductAction.java	(.../pzh/b2b)	(revision 14072)
+@@ -90,6 +90,7 @@
+ 	public void search(OrderProductBO orderProductBO, Model model, HttpServletResponse response, HttpServletRequest request) {
+ 		Pagination page = null;
+ 		try {
++			
+ 			page = orderProductService.search(orderProductBO);
+ 		} catch (Exception e) {
+ 			logger.error("list is error!", e);
+@@ -98,18 +99,6 @@
+ 		returnJson(response, request, toJson(page));
+ 	}
+ 	
+-	@RequestMapping(value = "{orderId}/searchByOrder", method = RequestMethod.POST)
+-	public void searchByOrder(@PathVariable String orderId, OrderProductBO orderProductBO, Model model, HttpServletResponse response, HttpServletRequest request) {
+-		Pagination page = null;
+-		try {
+-			orderProductBO.setOrderId(orderId);
+-			page = orderProductService.search(orderProductBO);
+-		} catch (Exception e) {
+-			logger.error("searchByOrder is error!", e);
+-		}
+-		returnJson(response, request, toJson(page));
+-	}
+-	
+ 	@RequestMapping(value = "searchStockOutProduct", method = RequestMethod.POST)
+ 	public void searchStockOutProduct(OrderProductBO orderProductBO, Model model, HttpServletResponse response, HttpServletRequest request) {
+ 		Pagination page = null;
+Index: src/com/eegoo/b2b/action/admin/ProductAction.java
+===================================================================
+--- src/com/eegoo/b2b/action/admin/ProductAction.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/action/admin/ProductAction.java	(.../pzh/b2b)	(revision 14072)
+@@ -137,10 +137,9 @@
+     
+     @Autowired
+     private ProductImageService productImageService;
+-  
++    
+     @Autowired
+     private ProductBrandService productBrandService;
+-  
+     @Autowired
+     private Product3dImageService product3dImageService;
+     
+@@ -434,7 +433,6 @@
+ 		returnJson(response, request, JsonUtil.toJson(page));
+ 		logger.debug("searchWithBrand action end");
+ 	}
+-	
+ 	@SuppressWarnings("unchecked")
+ 	@RequestMapping(value = "/searchWithPromotion")
+ 	public void searchWithPromotion(ProductBO productBO, HttpServletRequest request, HttpServletResponse response) {
+Index: src/com/eegoo/b2b/action/admin/OrderAction.java
+===================================================================
+--- src/com/eegoo/b2b/action/admin/OrderAction.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/action/admin/OrderAction.java	(.../pzh/b2b)	(revision 14072)
+@@ -39,7 +39,6 @@
+ import java.math.RoundingMode;
+ import java.text.DecimalFormat;
+ import java.util.ArrayList;
+-import java.util.Date;
+ import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.List;
+@@ -66,16 +65,12 @@
+ import org.springframework.web.bind.annotation.RequestMapping;
+ import org.springframework.web.bind.annotation.RequestMethod;
+ 
+-import com.alibaba.fastjson.JSON;
+-import com.alibaba.fastjson.JSONArray;
+ import com.eegoo.b2b.action.BaseAction;
+ import com.eegoo.b2b.bo.AuditHistoryBO;
+-import com.eegoo.b2b.bo.EmployeeBo;
+ import com.eegoo.b2b.bo.OrderBO;
+ import com.eegoo.b2b.bo.OrderDeliverAddressBO;
+ import com.eegoo.b2b.bo.OrderProductBO;
+ import com.eegoo.b2b.entity.AuditHistory;
+-import com.eegoo.b2b.entity.Employee;
+ import com.eegoo.b2b.entity.Fineness;
+ import com.eegoo.b2b.entity.Material;
+ import com.eegoo.b2b.entity.Member;
+@@ -91,7 +86,6 @@
+ import com.eegoo.b2b.entity.Supplier;
+ import com.eegoo.b2b.entity.User;
+ import com.eegoo.b2b.service.AuditHistoryService;
+-import com.eegoo.b2b.service.EmployeeService;
+ import com.eegoo.b2b.service.FinenessService;
+ import com.eegoo.b2b.service.MaterialService;
+ import com.eegoo.b2b.service.MemberService;
+@@ -169,10 +163,6 @@
+ 	private RegionService  regionService;
+ 	@Autowired
+ 	private OrderDeliverAddressService orderDeliverAddressService;
+-	
+-	@Autowired
+-	private EmployeeService employeeService;
+-	
+ 	/**
+ 	 * 销售订单查询-----通用查询
+ 	 */
+@@ -183,18 +173,8 @@
+ 		list(orderBO, model, response, request);
+ 		return "admin/order_query";
+ 	}
+-	
+-	/**
+-	 * 销售订单定价-----通用查询
+-	 */
+-	@RequestMapping(value = "price", method = { RequestMethod.GET })
+-	public String price(OrderBO orderBO, Model model, HttpServletResponse response, HttpServletRequest request) {
+-		model.addAttribute("query", true);
+-		list(orderBO, model, response, request);
+-		return "admin/order_price";
+-	}
+ 
+-	@RequestMapping(method = { RequestMethod.GET }) 
++	@RequestMapping(method = { RequestMethod.GET })
+ 	public String list(OrderBO orderBO, Model model, HttpServletResponse response, HttpServletRequest request) {
+ 		model.addAttribute("orderBO", orderBO);
+ 		return "admin/order_list";
+@@ -205,7 +185,7 @@
+ 		orderBO.getOrder().setStatus(Status.WSH.getCode());
+ 		searchOrder(orderBO, model, response, request);
+ 	}
+-	
++		
+ 	/**
+ 	 * 销售订单查询(用于采购单，选订单dialog )
+ 	 * @param purchaseOrderBO
+@@ -255,10 +235,6 @@
+ 				statuss.add(NumberConstants.NUM_25+"");
+ 				orderBO.setOrderStatus(statuss);
+ 			}
+-			
+-			if(1 == orderBO.getIsOnlyPrice() && orderBO.getHavingStatus() == null){
+-				orderBO.setHavingStatus(Order.HavingStatus.KDJ.getCode());
+-			}
+ 
+ 			page = orderService.searchOrder(orderBO);
+ 			List<Order> orders = page.getRows();
+@@ -301,6 +277,7 @@
+ 		} catch (Exception e) {
+ 			logger.error("list is error!", e);
+ 		}
++
+ //		returnJson(response, request, toJson(page));
+ 		returnJson(
+ 				response,
+@@ -308,7 +285,7 @@
+ 				JsonUtil.toJson(page, new String[] { "code", "createDate", "deliverAddress", "deliverAddress.address", "deliverAddress.fullAddress", "deliverAddress.name", "deliverAddress.phone",
+ 						"deliverAddress.reciever", "fullAddress", "id", "memberName", "memberUsername", "phone", "priceRange", "quantity", "realAmountText", "receiver", "status",
+ 						"totalPurchaseQuantity", "totalSalePriceText", "totalStockOutQuantity", "totalWeightText", "weightRange", "total", "basePoint", "page", "pageBar", "pageSize", "pageTotal",
+-						"rows","auditPrice" }));
++						"rows" }));
+ 	}
+ 	@RequestMapping(value = "search", method = RequestMethod.POST)
+ 	public void search(OrderBO orderBO, Model model, HttpServletResponse response, HttpServletRequest request) {
+@@ -446,7 +423,6 @@
+ 		//		auditHistoryService.search(auditHistoryBO)
+ 		return edit(id, model, response, request);
+ 	}
+-	
+ 
+ 	@RequestMapping(value = "{id}/cancel", method = RequestMethod.GET)
+ 	public String cancel(@PathVariable String id, Model model, HttpServletResponse response, HttpServletRequest request) {
+@@ -588,116 +564,7 @@
+ 
+ 		return "admin/order_input";
+ 	}
+-	
+-	@RequestMapping(value = "{id}/editprice", method = RequestMethod.GET)
+-	public String editprice(@PathVariable String id, Model model, HttpServletResponse response, HttpServletRequest request) {
+-		
+-		Order order = orderService.searchPrice(id);
+-		
+-		EmployeeBo employeeBo = new EmployeeBo();
+-		employeeBo.getEmployee().setDepartment("财务部");
+-		Pagination employees = employeeService.search(employeeBo);
+-		
+-		OrderProductBO orderProductBO = new OrderProductBO();
+-		orderProductBO.setOrderId(id);
+-		Pagination orderProducts = orderProductService.search(orderProductBO);
+ 
+-		Map<String,StandardGoldPrice> standardGoldPriceMap=ProductBaseDataUtil.getFinenessPriceMap();
+-		List<StandardGoldPrice> standardGoldPricelist = JsonUtil.mapTransitionList(standardGoldPriceMap);
+-		List<StandardGoldPrice> standardGoldPrices = new ArrayList<StandardGoldPrice>();
+-		if (orderProducts != null) {
+-			for (StandardGoldPrice standardGoldPrice : standardGoldPricelist) {
+-				for (OrderProduct orderProduct : (List<OrderProduct>)orderProducts.getRows()) {
+-					if(standardGoldPrice.getFinenessName() != null && standardGoldPrice.getFinenessName().equals(orderProduct.getFineness())){
+-						if(null != orderProduct.getGoldPrice()){
+-							standardGoldPrice.setPrice(new BigDecimal(orderProduct.getGoldPrice()));// 是定价后金额
+-						}else{
+-							standardGoldPrice.setPrice(null);// 是定价后金额
+-						}
+-						standardGoldPrices.add(standardGoldPrice);
+-						break;
+-					}
+-				}
+-			}
+-		}
+-		
+-		String priceOperatorName = "";
+-		if(employees != null){
+-			for (Employee employee : (List<Employee>)employees.getRows()) {
+-				if(employee.getId().equals(order.getPriceOperator())){
+-					priceOperatorName = employee.getName();
+-				}
+-			}
+-		}
+-	
+-		model.addAttribute("order", order);
+-		model.addAttribute("employees", employees);
+-		model.addAttribute("priceOperatorName", priceOperatorName);
+-		model.addAttribute("standardGoldPrices", standardGoldPrices);
+-		return "admin/order_price_input";
+-	}
+-	
+-	@RequestMapping(value = "{id}/queryPrice", method = RequestMethod.GET)
+-	public String queryPrice(@PathVariable String id, Model model, HttpServletResponse response, HttpServletRequest request) {
+-		model.addAttribute("queryPrice", true);
+-		return editprice(id, model, response, request);
+-	}
+-	
+-	@RequestMapping(value = "{id}/auditPrice", method = RequestMethod.GET)
+-	public String auditPrice(@PathVariable String id, Model model, HttpServletResponse response, HttpServletRequest request) {
+-		model.addAttribute("auditPrice", true);
+-		return editprice(id, model, response, request);
+-	}
+-	
+-	
+-	@RequestMapping(value = "updatePrice", method = RequestMethod.POST)
+-	public String updatePrice(@Valid OrderBO orderBO, BindingResult bindingResult, Model model, HttpServletResponse response, HttpServletRequest request) {
+-		Order order = orderBO.getOrder();
+-		// 验证
+-		if (bindingResult.hasErrors()) {
+-			return errorResult(bindingResult, response, request);
+-		}
+-		// 保存
+-		try {
+-			//销售金价
+-			if (!StringUtil.isRealEmpty(order.getId())) {
+-				this.orderService.updatePrice(orderBO);
+-			}
+-		} catch (Exception e) {
+-			logger.error(e.getMessage(), e);
+-			return errorResult(bindingResult, response, request);
+-		}
+-
+-		// 返回
+-		return successResult("销售定价",order, response, request);
+-	}
+-	
+-	@RequestMapping(value = "updateAuditPrice", method = RequestMethod.POST)
+-	public String updateAuditPrice(@Valid Order order, BindingResult bindingResult, Model model, HttpServletResponse response, HttpServletRequest request) {
+-
+-		// 验证
+-		if (bindingResult.hasErrors()) {
+-			return errorResult(bindingResult, response, request);
+-		}
+-		
+-		// 保存
+-		try {
+-			User user = SessionUtil.getUser(request);
+-			if(null != user){ //审核人
+-				order.setAuditOperator(user.getUsername());
+-			}
+-			order.setAuditPriceDate(DateUtil.formatDate(new Date(), "yyyy-MM-dd"));
+-			this.orderService.update(order);
+-		} catch (Exception e) {
+-			logger.error(e.getMessage(), e);
+-			return errorResult(bindingResult, response, request);
+-		}
+-
+-		// 返回
+-		return successResult("销售定价审核",order, response, request);
+-	}
+-
+-
+ 	@RequestMapping(value = "save", method = RequestMethod.POST)
+ 	public String save(@Valid Order order, BindingResult bindingResult, Model model, HttpServletResponse response, HttpServletRequest request) {
+ 
+@@ -705,7 +572,7 @@
+ 		if (bindingResult.hasErrors()) {
+ 			return errorResult(bindingResult, response, request);
+ 		}
+-		
++
+ 		// 保存
+ 		try {
+ 			if (StringUtil.isRealEmpty(order.getId())) {
+@@ -993,6 +860,7 @@
+ //		orderBO.setOrderStatus(statuss);
+ 		return "admin/search_order_list";
+ 	}
++	
+ 	/**
+ 	 * 订单完成
+ 	 * @param id
+@@ -1022,13 +890,22 @@
+ 		return successResult(null, "完成成功", response, request, false);
+ 	}
+ 	
+-	
++	/**
++	 * 订单完成
++	 * @param id
++	 * @param model
++	 * @param response
++	 * @param request
++	 * @return
++	 */
+ 	@RequestMapping(value = "{id}/distribution", method = RequestMethod.GET)
+ 	public String distribution(@PathVariable String id,Model model, HttpServletResponse response, HttpServletRequest request) {
+ 		try {
+ 			Order tempOrder = orderService.get(id);
+ 			if (tempOrder != null && tempOrder.getStatus()!=null){
+ 				orderService.updateStatus(id, Order.Status.DFK.getCode());
++				
++				
+ 				Member member = memberService.get(tempOrder.getMemberId());
+ 				if(member!=null){
+ 					String [] contentArray= new String[2];
+@@ -1043,8 +920,10 @@
+ 			logger.error(e.getMessage(), e);
+ 			return errorResult("配货完成失败", response, request);
+ 		}
++
+ 		return successResult(null, "配货完成成功", response, request, false);
+ 	}
++	
+ 	/**
+ 	 * 导出订单
+ 	 * @param id
+Index: src/com/eegoo/b2b/action/pay/PayAction.java
+===================================================================
+--- src/com/eegoo/b2b/action/pay/PayAction.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/action/pay/PayAction.java	(.../pzh/b2b)	(revision 14072)
+@@ -199,8 +199,7 @@
+ 	 * @throws Exception
+ 	 */
+ 	@RequestMapping(value = "/onlinePay")
+-	public ModelAndView onlinePay(Model model, HttpServletRequest request,
+-			HttpServletResponse response) throws Exception {
++	public ModelAndView onlinePay(Model model, HttpServletRequest request, HttpServletResponse response)throws Exception{
+ 		try{
+ 			String bankId = request.getParameter("bankId");
+ 			String orderId = request.getParameter("orderId");
+@@ -268,6 +267,8 @@
+ 		response.sendRedirect(PropertyUtil.getProperty(Constants.MEMBER_DOMAIN)+"/member/go");
+ 	}
+ 	
++        
++	
+ 	/**
+ 	 * 农行企业银行支付回调方法
+ 	 * @param model
+@@ -285,10 +286,14 @@
+ 				TrnxResult result = new TrnxResult(msg);
+ 				System.out.println("------------------------------------------------------------------------------------------------" + result.isSuccess());
+ 				if(result.isSuccess()){
+-				String payNo = result.getValue("MerchantTrnxNo");
+-				String amount = result.getValue("TrnxAMT");
+-				
+-				payService.updatePayCallBack(request, payNo, Double.parseDouble(amount));
++					String payNo = result.getValue("MerchantTrnxNo");
++					String amount = result.getValue("TrnxAMT");
++					System.out.println("----------------------------------------------msg ---" +msg);
++					System.out.println("----------------------------------------------TrnxResult ---" +result);
++					System.out.println("----------------------------------------------payNo ---" +payNo);
++					System.out.println("----------------------------------------------amount ---" +amount);
++					
++					payService.updatePayCallBack(request, payNo, Double.parseDouble(amount));
+ 				}else{
+ 					String status = result.getValue("TrnxStatus");
+ 					System.out.println("----------------------------------------------getErrorMessage ---" +result.getErrorMessage());
+@@ -333,4 +338,9 @@
+ 		}
+ 		response.sendRedirect(PropertyUtil.getProperty(Constants.MEMBER_DOMAIN)+"/member/go");
+ 	}
++	
++	
++	
++	
++	
+ }
+Index: src/com/eegoo/b2b/action/webservice/impl/MemberWsImpl.java
+===================================================================
+--- src/com/eegoo/b2b/action/webservice/impl/MemberWsImpl.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/action/webservice/impl/MemberWsImpl.java	(.../pzh/b2b)	(revision 14072)
+@@ -265,7 +265,8 @@
+ 		
+ 		if(requestMap.get("username") == null ||
+ 		   requestMap.get("password") == null ||
+-		   requestMap.get("mobile") == null ){
++		   requestMap.get("mobile") == null ||
++		   requestMap.get("email") == null){
+ 			data.put("status", NumberConstants.NUM_2);
+ 			return JSON.toJSONString(data);
+ 		}
+@@ -273,13 +274,12 @@
+ 		String username = requestMap.get("username").toString();
+ 		String password = requestMap.get("password").toString();
+ 		String mobile = requestMap.get("mobile").toString();
++		String email = requestMap.get("email").toString();
+ 		
+-		String email = requestMap.get("email")==null?null:requestMap.get("email").toString();
+-		
+ 		if(username.trim().equals("")||
+ 		   password.trim().equals("")||
+-		   mobile.trim().equals("")
+-		 ){
++		   mobile.trim().equals("")||
++		   email.trim().equals("")){
+ 			data.put("status", NumberConstants.NUM_3);
+ 			return JSON.toJSONString(data);
+ 		}
+Index: src/com/eegoo/b2b/util/MessageTemplateUtill.java
+===================================================================
+--- src/com/eegoo/b2b/util/MessageTemplateUtill.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/util/MessageTemplateUtill.java	(.../pzh/b2b)	(revision 14072)
+@@ -5,7 +5,6 @@
+ 
+ 
+ public class MessageTemplateUtill {
+-	/**短信支持模板（那些短信可以发）*/
+ 	public static final String SMS_MESSEGE_TEMPLATE_ENABLED="SMS_MESSEGE_TEMPLATE_ENABLED";
+ 	public static final String SMS_MESSEGE_TEMPLATE_ENABLED_DEFAULT = new StringBuffer()
+ 	.append(",").append(SmSTemplateType.ORDER_SUCCESS.getTemplateKey())
+@@ -22,21 +21,23 @@
+ 	 *
+ 	 */
+ 	public enum SmSTemplateType {
+-		/**下单成功*/
++		//下单成功
+ 		ORDER_SUCCESS(1,"SMS_MESSEGE_ORDER_SUCCESS_TEMPLATE","尊贵的臻宝通会员[{0}]您好！订单成功"),
+-		/**订单审核通过*/
++		//订单审核通过
+ 		ORDER_AUDITED(2,"SMS_MESSEGE_ORDER_AUDITED_TEMPLATE","尊贵的臻宝通会员[{0}]您好！您编号为{1}的订单已经通过审核。如有疑问可拨打全国客服热线：400-8081515，臻宝通真诚为您服务！"),
+-		/**发送快递*/
++		//发送快递
+ 		ORDER_EXPRESS(3,"SMS_MESSEGE_ORDER_EXPRESS_TEMPLATE","尊贵的臻宝通会员[{0}]您好！您{1}已经发货，请注意查收.如有疑问可拨打全国客服热线：400-8081515，臻宝通真诚为您服务！"),
+-		/**发送注册短信*/
++		//订单支付完成，发送用户消息
+ 		MEMBER_REGISTER(4,"SMS_MESSEGE_MEMBER_REG_TEMPLATE","亲爱哒 ，恭喜您成为臻宝通平台的会员！您的会员帐号为: {0}。作为黄金行业的领跑者，速度革命，在于你我，从选货、配货、下单到送货…只有一个字“爽”！，更多请持续关注『臻宝通』微信公众号，官方平台： http://www.zhenbaotong.com "),
+-		/**会员充值成功*/
++		//订单支付完成，发送用户消息
+ 		RECHARGE_MESSAGE_MEMBER(5,"SMS_MESSEGE_ORDER_PAY_MEMBER_TEMPLAT","尊贵的臻宝通会员[{0}]您好！您预存资金成功，预存人民币{1}元。如有疑问可拨打全国客服热线：400-8081515，臻宝通真诚为您服务！"),
+-		/**订单配货完成*/
++		//订单配货完成，发送用户消息
+ 		ORDER_DISTRIBUTION_MESSAGE(6,"SMS_MESSEGE_ORDER_DISTRIBUTION_TEMPLAT","尊贵的臻宝通会员[{0}]您好！您编号为{1}的订单已经完成配货，请在约定的账期内进行付款。如有疑问可拨打全国客服热线：400-8081515，臻宝通真诚为您服务！"),
+-		/**订单付款成功*/
++		//订单支付完成，发送系统管理员消息
+ 		PAY_MESSAGE_MEMBER(7,"SMS_MESSEGE_ORDER_PAY_SYSTEM_TEMPLAT","[{0}]您好！订单：{1}已经付款成功，请注意查收.如有疑问可拨打全国客服热线：400-8081515，臻宝通真诚为您服务！");
++	
+ 		
++		
+ 		private SmSTemplateType(int code,String templateKey, String defaltTemplate) {
+ 			this.code = code;
+ 			this.templateKey=templateKey;
+@@ -60,7 +61,6 @@
+ 	static public Boolean sendSms(String mobile,String [] contentArray,SmSTemplateType type){
+ 		String sms_messege_template="";
+ 		Config template_enabled=SystemConfigCacheUtill.getSystemConfig(SMS_MESSEGE_TEMPLATE_ENABLED);
+-		//哪些模板可以发短信
+ 		if(null==template_enabled||StringUtil.isEmpty(template_enabled.getValue())){
+ 			 sms_messege_template=SMS_MESSEGE_TEMPLATE_ENABLED_DEFAULT;
+ 		}else{
+Index: src/com/eegoo/b2b/util/JsonUtil.java
+===================================================================
+--- src/com/eegoo/b2b/util/JsonUtil.java	(.../trunk/b2b)	(revision 14072)
++++ src/com/eegoo/b2b/util/JsonUtil.java	(.../pzh/b2b)	(revision 14072)
+@@ -1,10 +1,7 @@
+ package com.eegoo.b2b.util;
+ 
+-import java.util.ArrayList;
+ import java.util.HashMap;
+ import java.util.HashSet;
+-import java.util.Iterator;
+-import java.util.List;
+ import java.util.Map;
+ import java.util.Set;
+ 
+@@ -225,21 +222,6 @@
+ 			loaded = true;
+ 		}
+ 	}
+-	
+-	/**
+-	 * map转换成list
+-	 * @param map
+-	 * @return
+-	 */
+-	public static List  mapTransitionList(Map map) {
+-		List list = new ArrayList();
+-		Iterator iter = map.entrySet().iterator();  //获得map的Iterator
+-		while(iter.hasNext()) {
+-			 java.util.Map.Entry entry = (java.util.Map.Entry)iter.next();
+-			list.add(entry.getValue());
+-		}
+-		return list;
+-	}
+ }
+ 
+ class CustomPropertyFilter implements PropertyFilter {
+Index: src/TrustMerchantB2B.properties
+===================================================================
+--- src/TrustMerchantB2B.properties	(.../trunk/b2b)	(revision 14072)
++++ src/TrustMerchantB2B.properties	(.../pzh/b2b)	(revision 14072)
+@@ -48,10 +48,10 @@
+ TrustPayTrxURL=/b2b/trustpay/ReceiveMerchantTrxReqServlet
+ 
+ #����֧��ƽ̨֤��
+-TrustPayCertFile=D:\\B2B_WORKSPACE\\b2b_ccb\\src\\TrustPay.cer
++TrustPayCertFile=/data/www/b2b-pay/WEB-INF/classes/TrustPay.cer
+ 
+ #ũ�и�֤���ļ�
+-TrustStoreFile=D:\\B2B_WORKSPACE\\b2b_ccb\\src\\abc.truststore
++TrustStoreFile=/data/www/b2b-pay/WEB-INF/classes/abc.truststore
+ 
+ #ũ�и�֤���ļ�����
+ TrustStorePassword=changeit
+@@ -66,7 +66,7 @@
+ # �̻�ϵͳ���ö� (�����)                                                             
+ #==============================================================================
+ #������־�ļ����Ŀ¼
+-LogPath=c:\\
++LogPath=/data/logs/
+ 
+ #֤�鴢��ý��
+ #0: File
+@@ -74,7 +74,7 @@
+ MerchantKeyStoreType=0
+ 
+ #�̻�֤�鴢��Ŀ¼�ļ�������KeyStoreType=0ʱ�������趨��
+-MerchantCertFile=D:\\B2B_WORKSPACE\\b2b_ccb\\src\\abc_cert_b01.pfx
++MerchantCertFile=/data/www/b2b-pay/WEB-INF/classes/abc_cert_b01.pfx
+ 
+ #�̻�˽Կ�������루��KeyStoreType0ʱ�������趨��
+ MerchantCertPassword=ABc12345
+@@ -86,4 +86,4 @@
+ SignServerPort=
+ 
+ #Sign Server���루��KeyStoreType=1ʱ��ѡ���趨��
+-SignServerPassword=
+\ No newline at end of file
++SignServerPassword=
+Index: src/TrustMerchant.properties
+===================================================================
+--- src/TrustMerchant.properties	(.../trunk/b2b)	(revision 14072)
++++ src/TrustMerchant.properties	(.../pzh/b2b)	(revision 14072)
+@@ -56,16 +56,16 @@
+ TrustPayIETrxURL=https://easyabc.95599.cn/b2c/trustpay/ReceiveMerchantIERequestServlet
+ #�̻�ͨ��������ύ��������֧��ƽ̨���ش���ҳ�棻��ҳ�����̻���ҳ�棻·���̻����Ը����Լ���Ӧ�������������
+ #��http://www.abc.china/ErrorPage.jsp
+-MerchantErrorURL=http://172.16.20.167/member/go
++MerchantErrorURL=http://pay.zhenbaotong.com:53268/member/go
+ #==========================================================================================
+ # ����֧��ƽ̨ϵͳ���ö� - �������� - ����֤����·����ʹ��ͱ��ش��·����ƥ�䣨����·����
+ #==========================================================================================
+ #����֧��ƽ̨֤��,��TrustPay.cer�Ĵ��·����������λ��
+-TrustPayCertFile=D:/B2B_WORKSPACE/b2b_ccb/src/TrustPay.cer
++TrustPayCertFile=/data/www/b2b-pay/WEB-INF/classes/TrustPay.cer
+ 
+ 
+ #ũ�и�֤���ļ�����abc.truststore��ŵ�·����������λ��
+-TrustStoreFile=D:/B2B_WORKSPACE/b2b_ccb/src/abc.truststore
++TrustStoreFile=/data/www/b2b-pay/WEB-INF/classes/abc.truststore
+ 
+ #ũ�и�֤���ļ�����
+ TrustStorePassword=changeit
+@@ -79,7 +79,7 @@
+ # �̻�ϵͳ���ö� (�����)                                                             
+ #==============================================================================
+ #������־�ļ����Ŀ¼
+-LogPath=c:/
++LogPath=/data/logs/
+ 
+ #֤�鴢��ý��
+ #0: File
+@@ -87,7 +87,7 @@
+ MerchantKeyStoreType=0
+ 
+ #�̻�֤�鴢��Ŀ¼�ļ�������KeyStoreType=0ʱ�������趨�������ݴ��λ����������
+-MerchantCertFile=D:/B2B_WORKSPACE/b2b_ccb/src/abc_cert_a01.pfx
++MerchantCertFile=/data/www/b2b-pay/WEB-INF/classes/abc_cert_a01.pfx
+ #�̻�˽Կ�������루��KeyStoreType0ʱ�������趨��
+ MerchantCertPassword=eegoo.@123
+ #Sign Server��ַ����KeyStoreType=1ʱ�������趨��
+@@ -97,4 +97,4 @@
+ #SignServerPort=���ʹ��ǩ�������������ڴ��趨ǩ���������Ķ˿ں�
+ 
+ #Sign Server���루��KeyStoreType=1ʱ��ѡ���趨��
+-#SignServerPassword=���ʹ��ǩ�������������ڴ��趨ǩ��������������
+\ No newline at end of file
++#SignServerPassword=���ʹ��ǩ�������������ڴ��趨ǩ��������������
+Index: src/cxf-servlet.xml
+===================================================================
+--- src/cxf-servlet.xml	(.../trunk/b2b)	(revision 14072)
++++ src/cxf-servlet.xml	(.../pzh/b2b)	(revision 14072)
+@@ -25,8 +25,6 @@
+ 	<bean id="mainBean" class="com.eegoo.b2b.action.webservice.impl.MainWsImpl"/>
+ 	<bean id="collegeBean" class="com.eegoo.b2b.action.webservice.impl.CollegeWsImpl"/>
+ 	<bean id="vasBean" class="com.eegoo.b2b.action.webservice.impl.VasWsImpl"/>
+-	<bean id="productBrandBean" class="com.eegoo.b2b.action.webservice.impl.ProductBrandWsImpl"/>
+-	<bean id="payBean" class="com.eegoo.b2b.action.webservice.impl.PayWsImpl"/>
+ 	
+ 	<bean id="inMessageInterceptor" class="org.apache.cxf.interceptor.LoggingInInterceptor" />  
+     <bean id="outMessageInterceptor" class="org.apache.cxf.interceptor.LoggingOutInterceptor"/>
+@@ -41,8 +39,6 @@
+ 			<ref bean="mainBean"/>
+ 			<ref bean="collegeBean"/>
+ 			<ref bean="vasBean"/>
+-			<ref bean="productBrandBean"/>
+-			<ref bean="payBean"/>
+ 		</jaxrs:serviceBeans>
+ 		<jaxrs:inInterceptors>
+ 			<ref bean="inMessageInterceptor"/>
+Index: web/WEB-INF/jsp/member/order_list.jsp
+===================================================================
+--- web/WEB-INF/jsp/member/order_list.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/member/order_list.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -138,7 +138,6 @@
+ 													<div class="cancel-order-btn" style="float:left;">
+ 														<a href="<c:url value='/member/' />order/${item.id}/view"  >查看详情</a>
+ 													</div>
+-													
+ 													<c:if test="${ item.isPayment}">
+ 														<div class="cancel-order-btn" style="float:left;margin-left: 5px;">
+ 															<a href="<c:out value='${payDomain }'/>/pay/goOnLinePay/${item.id}"  target="_blank">在线支付</a>
+Index: web/WEB-INF/jsp/admin/order_price.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/order_price.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/order_price.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -1,193 +0,0 @@
+-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+-<%@ include file="/WEB-INF/jsp/include.jsp"%>
+-
+-<script type="text/javascript">
+-	var orderStatusMap = <b2b:enum clazz='com.eegoo.b2b.entity.Order$Status' type="map"/>;
+-	// var orderStatusArray = <b2b:enum clazz='com.eegoo.b2b.entity.Order$HavingStatus' type="array"/>;
+-	
+-	var orderStatusArray = [{ code:"25", name:"审核成功订单"},{ code:"30", name:"待采购订单"},  { code:"35", name:"待付款订单"},  { code:"40", name:"待发货订单"},  { code:"45", name:"待签收订单"},  { code:"49", name:"已签收订单"},{ code:"50", name:"已完成订单"}];
+-	var orderAuditPriceMap = {0:"未定价",1:"未审核",2:"审核通过",3:"审核不通过"};
+-	var auditPriceStatusArray = [{code:"0",name:"未定价"},{code:"1",name:"未审核"},{code:"2",name:"审核通过"},{code:"3",name:"审核不通过"}];	
+-	
+-	$("#order-price-serach-submit").click(function() {
+-		$('#order-price-datagrid').datagrid('unselectAll');
+-		var param = $('#order-price-search-form').serializeObject();
+-// 		param['orderStatus']='20,30,40';
+-		$('#order-price-datagrid').datagrid('load', param);
+-	});
+-	$("#order-price-serach-clear").click(function() {
+-		$('#order-price-search-form').form('clear');
+-	});
+- 
+-	
+-	$("#order-price-view").click(function() { 
+-		var row = $('#order-price-datagrid').datagrid('getSelected');
+-		if (row && row.id) {
+-			reOpenTab('订单定价详情', '', '<c:url value='/'/>admin/order/' + row.id + '/queryPrice');
+-		} else {
+-			messagerShow("请选择订单！");
+-		}
+-	});
+-	
+-	$("#order-price-edit").click(function() {
+-		var row = $('#order-price-datagrid').datagrid('getSelected');
+-		if (row && row.id) {
+-			if(row.auditPrice == 2){
+-				messagerShow("该订单定价已审核，不能定价！");
+-				return;
+-			}else{
+-				reOpenTab('订单定价详情', '', '<c:url value='/'/>admin/order/' + row.id + '/editprice');
+-			}
+-		} else {
+-			messagerShow("请选择订单！");
+-		}
+-	});
+-	
+-	$("#order-price-audit").click(function() {
+-		var row = $('#order-price-datagrid').datagrid('getSelected');
+-		if (row && row.id) {
+-			if(row.auditPrice == '' || row.auditPrice == '0'){
+-				messagerShow("该订单定价未定价，请先定价！");
+-				return;
+-			}else if(row.auditPrice == 2){
+-				messagerShow("该订单定价已审核，不能在审核！");
+-				return;
+-			}else{
+-				reOpenTab('订单定价详情', '', '<c:url value='/'/>admin/order/' + row.id + '/auditPrice');
+-			}
+-		} else {
+-			messagerShow("请选择订单！");
+-		}
+-	});
+-	 
+-</script>
+-
+-<div id="order-price-toolbar">
+-	<form id="order-price-search-form">
+-		<input type="hidden" name="isOnlyPrice" value="1" />
+-		<table class="panel-body panel-body-noheader datagrid-btable datagrid-body e-view-table" border="0" cellpadding="0" cellspacing="0" width="100%">
+-			<tbody>
+-				<tr>
+-					<td>单据编号</td>
+-					<td><input type="text" name="order.code" /></td>
+-					<td>会员帐号</td>
+-					<td><input type="text" name="order.memberUsername" /></td>
+-					<td>会员姓名</td>
+-					<td><input type="text" name="order.memberName" /></td>
+-					<td>定价状态</td>
+-					<td><input class="easyui-combobox" name="order.auditPrice" 
+-						data-options="editable:false,
+-									valueField: 'code',
+-									textField: 'name',
+-									data: auditPriceStatusArray
+-						"/>
+-					</td>
+-				</tr>
+-				<tr>
+-					<td>商品编号</td>
+-					<td><input type="text" name="order.orderProduct.productCode" /></td>
+-					<td>商品名称</td>
+-					<td><input type="text" name="order.orderProduct.productName" /></td>
+-					<td>订单状态</td>
+-					<td><input class="easyui-combobox" name="havingStatus" data-options="
+-					editable:false,
+-							valueField: 'code',
+-							textField: 'name',
+-							data: orderStatusArray
+-							" />
+-					</td>
+-					<td>下单时间</td>
+-					<td><input type="text" name="startDate" class="easyui-datebox"  editable="false" />&nbsp;-&nbsp;<input type="text" name="endDate" class="easyui-datebox"  editable="false" /></td>
+-				</tr>
+-				<tr>
+-					<td colspan="8">
+-						<a href="#" id="order-price-serach-submit" style="padding:1px 26px; background:#d75353; border-radius:10px; color:#fff; font-weight:bold;" class="easyui-linkbutton" plain="true" iconCls="jewel-icon-wsearch">查询</a>
+-						<a href="#" id="order-price-serach-clear" style="padding:1px 26px; background:#627ca5; border-radius:10px; color:#fff; font-weight:bold;" class="easyui-linkbutton" plain="true" iconCls="jewel-icon-wemputy">清空</a>
+-					</td>
+-				</tr>
+-			</tbody>
+-		</table>
+-
+-	</form>
+-    <div style="height:26px;">
+-	 	<a href="#" id="order-price-edit" class="easyui-linkbutton easyui-tooltip" iconCls="jewel-icon-edit" plain="true" title="选择订单点击定价">定价</a>
+-	 	<a href="#" id="order-price-view" class="easyui-linkbutton easyui-tooltip" iconCls="jewel-icon-view" plain="true" title="选择订单点击查看">查看</a>
+-	 	<a href="#" id="order-price-audit" class="easyui-linkbutton easyui-tooltip" iconCls="jewel-icon-audit" plain="true" title="选择订单点击审核">审核</a>
+-    </div>
+-	
+-</div>
+-
+-<table class="easyui-datagrid" id="order-price-datagrid"  nowrap="false"  pagination="true" singleSelect="true" striped="true" idField="id" method="post" rownumbers="true" fit="true" pageSize="40"
+-	toolbar="#order-price-toolbar" url="<c:url value='/'/>admin/order/searchOrder?isOnlyPrice=1">
+-
+-	<thead>
+-		<tr>
+-			<th data-options="field:'code',width:140">单据编号</th>
+-			<th data-options="field:'memberName',width:80">会员名称</th>
+-			<th data-options="field:'memberUsername',width:80">会员帐号</th>
+-			<th data-options="field:'quantity',width:70">总数量(件)</th>
+-			<th data-options="field:'weightRange',width:100">总重量(克)</th>
+-			<th data-options="field:'totalWeightText',width:100">实际重量(克)</th>
+-			<th data-options="field:'priceRange',width:140">总金额(元)</th>
+-			<th data-options="field:'totalSalePriceText',width:80">应收金额(元)</th>
+-			<th data-options="field:'realAmountText',width:80">实收金额(元)</th>
+-			<th data-options="field:'status',width:60,formatter:function(value,row,index){return orderStatusMap[value];}">订单状态</th>
+-			<th data-options="field:'auditPrice',width:60,formatter:function(value,row,index){
+-					if(row.auditPrice == 0 || row.auditPrice =='' ){
+-						return '未定价'
+-					}else if(row.auditPrice == 1){
+-						return '未审核'
+-					}else if(row.auditPrice == 2 ){
+-						return '审核通过'
+-					}else if(row.auditPrice == 3 ){
+-						return '审核未通过'
+-					}
+-				}">定价状态</th>
+-			<th data-options="field:'totalPurchaseQuantity',width:80,formatter:function(value,row,index){
+-				if(row.quantity){
+-					if(row.totalPurchaseQuantity){
+-						return row.totalPurchaseQuantity+'/'+row.quantity;
+-					}else{
+-						return '0/'+row.quantity;
+-					}
+-				}else{
+-					if(row.totalPurchaseQuantity){
+-						return row.totalPurchaseQuantity+'/0';
+-					}else{
+-						return '0/0';
+-					}
+-				}
+-				}">采购数量(件)</th>
+-			<th data-options="field:'totalStockOutQuantity',width:80,formatter:function(value,row,index){
+-				if(row.quantity){
+-					if(row.totalStockOutQuantity){
+-						return row.totalStockOutQuantity+'/'+row.quantity;
+-					}else{
+-						return '0/'+row.quantity;
+-					}
+-				}else{
+-					if(row.totalStockOutQuantity){
+-						return row.totalStockOutQuantity+'/0';
+-					}else{
+-						return '0/0';
+-					}
+-				}
+-				}">发货数量(件)</th>
+-			<th data-options="field:'7x',width:80,formatter:function(value,row,index){
+-				if(row.totalSalePriceText){
+-					if(row.realAmountText){
+-						return row.realAmountText+'/'+row.totalSalePriceText;
+-					}else{
+-						return '0.00/'+row.totalSalePriceText;
+-					}
+-				}else{
+-					if(row.realAmountText){
+-						return row.realAmountText+'/0.00';
+-					}else{
+-					}
+-				}
+-				}">收款情况(元)</th>
+-			<th data-options="field:'createDate',width:130">下单日期</th>
+-		</tr>
+-	</thead>
+-</table>
+Index: web/WEB-INF/jsp/admin/order_price_input.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/order_price_input.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/order_price_input.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -1,434 +0,0 @@
+-<%@page import="java.util.Date"%>
+-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+-<%@ include file="/WEB-INF/jsp/include.jsp"%>
+-<%
+-	java.util.Date currentTime = new java.util.Date();//得到当前系统时间 
+-	request.setAttribute("currentTime",currentTime);
+-%>
+-<style type="text/css">
+-.distribution-product-table{overflow: auto;border: 1px solid #c5c5c5;}
+-.distribution-product-table table{background:#c5c5c5;width:100%;}
+-.distribution-product-table table th{text-align: center;height:25px;}
+-.distribution-product-table table th,.distribution-product-table table td{background:#fff;text-align: center}
+-</style>
+-<script>
+-	var orderStatusArray = <b2b:enum clazz='com.eegoo.b2b.entity.Order$Status' type="array"/>;
+-	
+-	var orderPaymentMap = <b2b:enum clazz='com.eegoo.b2b.entity.Order$Payment' type="map"/>;
+-	var orderPaymentArray = <b2b:enum clazz='com.eegoo.b2b.entity.Order$Payment' type="array"/>;
+-	var orderDeliveryMap = <b2b:enum clazz='com.eegoo.b2b.entity.Order$Delivery' type="map"/>;
+-	var orderDeliveryArray = <b2b:enum clazz='com.eegoo.b2b.entity.Order$Delivery' type="array"/>;
+-	var orderProductsData = [];
+-	var orderDeliverAddressData = [];
+-	var productCategoriesMap = <c:out value="${productCategoriesMap}" escapeXml="false" default="{}"/>;
+-	var materialsMap = <c:out value="${materialsMap}" escapeXml="false" default="{}"/>;
+-	var suppliersMap = <c:out value="${suppliersMap}" escapeXml="false" default="{}"/>;
+-	var stylesMap = <c:out value="${stylesMap}" escapeXml="false" default="{}"/>;
+-	var finenessesMap = <c:out value="${finenessesMap}" escapeXml="false" default="{}"/>;
+-	var processesMap = <c:out value="${processesMap}" escapeXml="false" default="{}"/>;
+-	
+-	
+-	
+-
+-</script>
+-<div style="padding: 20px 60px 20px 60px">
+-<div style="margin-bottom:20px;">
+-<c:if test="${empty queryPrice and empty auditPrice}">
+-	<a id="order_price_input-submit-base" href="javascript:void(0)" class="easyui-linkbutton easyui-tooltip" iconCls="jewel-icon-save" plain="true" title="保存销售订单定价" style="padding:1px 30px; background:#e3e9f5;">保存</a>
+-</c:if>
+-<c:if test="${not empty auditPrice }">
+-		<a id="order-price-input-audit-form-submit" href="javascript:void(0)" class="easyui-linkbutton easyui-tooltip" iconCls="jewel-icon-save" plain="true" title="保存审核"  style="padding:1px 30px; background:#e3e9f5;">审核</a>
+-</c:if>
+-</div>
+-<fieldset>
+-	<div align="center" style="font-size: x-large; position:relative; margin-bottom:20px;">销售订单定价
+-		 <c:if test="${order.auditPrice==0 || order.auditPrice==1 ||(empty order.auditPrice)}">
+-			 <img src="<c:url value='/'/>ui/admin/img/new-note.png" style="position:absolute; right:250px;"/>
+-		 </c:if>
+-		 <c:if test="${order.auditPrice==2}">
+-			 <img src="<c:url value='/'/>ui/admin/img/audit-note.png" style="position:absolute; right:250px;"/>
+-		 </c:if>
+-		 <c:if test="${order.auditPrice==3}">
+-			 <img src="<c:url value='/'/>ui/admin/img/invalid_note.png" style="position:absolute; right:250px;"/>
+-		 </c:if>
+-	</div>
+-		
+-	<form id="order_price_input-form-base" method="post" action="<c:url value='/'/>admin/order/updatePrice">
+-		<table cellpadding="5">
+-			<tr>
+-				<td width="130px"  align="right"><div style="width: 80px">单据编号：</div> </td>
+-				<td width="260px">
+-					<div style="width: 260px">
+-						<input type="hidden" name="order.id" value="${order.id }" /><input type="text" name="order.code" value="${order.code }" readonly="readonly" />
+-					</div>
+-				</td>
+-				<td width="130px"  align="right"><div style="width: 80px">定价人员：</div></td>
+-				<td width="260px"><div style="width: 260px">
+-					    <select <c:if test="${!empty auditPrice or !empty queryPrice}">readonly="readonly"</c:if> id="employees_priceOperator" class="easyui-combobox" name="order.priceOperator" data-options="required:true" style="width:200px;">
+-					   		<c:forEach items="${employees.rows}" var="v">
+-						    	<option <c:if test="${order.priceOperator == v.id }">selected="selected"</c:if> value="${v.id}">${v.name }</option>
+-					   		</c:forEach>
+-						</select>
+-				</div></td>
+-				<td width="130px"  align="right"><div style="width: 80px">定价日期：</div></td>
+-				<td width="260px" align="left">
+-				<div style="width: 260px">
+-				<input name="order.priceDate" readonly="readonly" value="<c:if test='${!empty order.priceDate}'>${order.priceDate } </c:if><c:if test='${empty order.priceDate }'><fmt:formatDate value='${currentTime}' pattern='yyyy-MM-dd'/></c:if>"/> 
+-				</div>
+-				</td>
+-			</tr>
+-			
+-			<tr>
+-				<td  align="right" >下单日金价：</td>
+-				<td colspan="5" >
+-					<div style="width: 960px">
+-						${order.currGoldPrice} (供参考)
+-					</div>
+-				</td>
+-			</tr>
+-			<tr>
+-				<td align="right" >销售金价：</td>
+-				<td colspan="5">
+-					<input name="priceGoldPrice" id="order-price-input-price-gold-price" type="hidden" value="${order.priceGoldPrice}" />
+-					<input name="orderProducts" id="order-price-input-price-order-product" type="hidden" value="" />
+-					<c:forEach items="${standardGoldPrices}" var="v">
+-						<label>${v.finenessName }：</label><input <c:if test="${!empty auditPrice or !empty queryPrice}">readonly="readonly"</c:if> type="text" class="easyui-numberbox order-price-input-fineness-class" data-options="required:true,min:0,max:99999999999,precision:2" vid="${v.finenessId}" name="${v.finenessId}" value="${v.price}"/>(元/克)&nbsp;
+-					</c:forEach>
+-				</td>
+-			</tr>
+-			<tr>
+-				<td align="right" >折扣：</td>
+-				<td title="公式：折扣后的价格=商品总额*折扣 %)"><input <c:if test="${!empty auditPrice or !empty queryPrice}">readonly="readonly"</c:if> type="text" name="order.discountRate" value="${order.discountRate}" class="easyui-numberbox" data-options="min:0,max:100" />%</td>
+-				<td align="right">折扣额：</td>
+-				<td><input <c:if test="${!empty auditPrice or !empty queryPrice}">readonly="readonly"</c:if> type="text" name="order.discountAmount" value="${order.discountAmount}" class="easyui-numberbox" data-options="min:0,max:99999999,precision:2" />元</td>
+-				<td align="right">附加费：</td>
+-				<td><input <c:if test="${!empty auditPrice or !empty queryPrice}">readonly="readonly"</c:if> type="text" name="order.extraCharge" value="${order.extraCharge}" class="easyui-numberbox" data-options="min:0,max:99999999,precision:2" />元</td>
+-			</tr>
+-			<tr>
+-				<td  align="right">处理备注：</td>
+-				<td colspan="5"><textarea name="order.priceDescription" <c:if test="${!empty auditPrice or !empty queryPrice}">readonly="readonly"</c:if> style="width: 950px; height: 60px; resize: none" name="notes" class="easyui-validatebox " data-options="validType:'maxLength[500]'">${order.priceDescription }</textarea></td>
+-			</tr>
+-		</table>
+-	</form>
+-	
+-	<div style="margin-top: 20px;"></div>
+-	<div id="order-price-input-toolbar" style="height:30px;line-height: 30px;">
+-		<c:if test="${empty auditPrice and empty queryPrice}">
+-			<a href="#" id="order-price-input-price-edit" class="easyui-linkbutton" iconCls="jewel-icon-edit" plain="true">修改</a>
+-			<a href="#" id="order-price-input-price-ok" class="easyui-linkbutton" iconCls="jewel-icon-save" plain="true" >确定</a>
+-			<a href="#" id="order-price-input-undo"  class="easyui-linkbutton" iconCls="jewel-icon-revocation" plain="true" >撤销</a>
+-		</c:if>
+-	</div>
+-	<table class="easyui-datagrid" 
+-		id="order-price-input-datagrid"
+-		data-options="
+-			nowrap:'false',
+-			pagination:'true',
+-			singleSelect:'true',
+-			striped:'true',
+-			idField:'id',
+-			method:'post',
+-			rownumbers:'true',
+-			toolbar:'#order-price-input-toolbar',
+-			fit:'true',
+-			pageSize:'20',
+-			onDblClickRow:orderPriceInputDblClickRow,
+-			onLoadSuccess:defaultEditRow,
+-			toolbar : '#order-price-input-toolbar',
+-			url:'<c:url value='/'/>admin/orderProduct/${order.id}/searchByOrder'
+-		">
+-	<thead>
+-		<tr>
+-			<th data-options="field:'id',width:160,hidden:true">订单商品id</th>
+-			<th data-options="field:'productCode',width:120">商品编号</th>
+-			<th data-options="field:'productName',width:200">商品名称</th>
+-			<th data-options="field:'fineness',width:100">成色</th>
+-			<th data-options="field:'weightStandard',width:120">重量规格</th>
+-			<th data-options="field:'pricingType',width:100,formatter:function(value,row,index){
+-								if(row.pricingType == '1'){
+-									return '定价';
+-								}else if(row.pricingType == '2'){
+-									return '计价';
+-								}
+-								return null;
+-				}">价格类型</th>
+-			<th data-options="field:'processingFeeType',width:100,formatter:function(value,row,index){
+-								if(row.processingFeeType == '1'){
+-									return '每克';
+-								}else if(row.processingFeeType == '2'){
+-									return '每件';
+-								}
+-								return null;
+-				}">工费类型</th>
+-			<th data-options="field:'baseCharge',width:100,formatter:function(value,row,index){
+-								if(row.baseCharge){
+-									return ffmoney(row.baseCharge,2);
+-								}
+-								return null;
+-				},editor:{type:'numberbox',options:{required:false,min:0,max:99999999999,precision:2}}">销售基本工费</th>
+-			<th data-options="field:'extraCharge',width:100,formatter:function(value,row,index){
+-								if(row.extraCharge){
+-									return ffmoney(row.extraCharge,2);
+-								}
+-								return null;
+-				},editor:{type:'numberbox',options:{required:false,min:0,max:99999999999,precision:2}}">销售附加工费</th>
+-			<th data-options="field:'processingFee',width:100,formatter:function(value,row,index){
+-								if(row.processingFee){
+-									return ffmoney(row.processingFee,2);
+-								}
+-								return null;
+-				},editor:{type:'numberbox',options:{required:false,min:0,max:99999999999,precision:2}}">销售每件工费</th>
+-			<th data-options="field:'salePrice',width:100,formatter:function(value,row,index){
+-								if(row.salePrice){
+-									return ffmoney(row.salePrice,2);
+-								}
+-								return null;
+-				},editor:{type:'numberbox',options:{required:false,min:0,max:99999999999,precision:2}}">销售单价价格</th>
+-			<th data-options="field:'goldPrice',width:100,formatter:function(value,row,index){
+-							if(row.goldPrice){
+-								return ffmoney(row.goldPrice,2);
+-							}
+-							return null;
+-			}">销售单价价格</th>
+-		</tr>
+-	</thead>
+-	</table>
+-	
+-	<c:if test="${not empty auditPrice or not empty queryPrice }">
+-			<form id="order-price-input-audit-form" method="post" action="<c:url value='/'/>admin/order/updateAuditPrice">
+-				<input name="id" type="hidden" value="${order.id}" />
+-				<table class="audit">
+-					<tr>
+-						<td>审核结果</td>
+-						<td><input <c:if test="${not empty queryPrice or order.auditPrice == 2}">disabled="disabled"</c:if><c:if test="${order.auditPrice == 2}">checked="checked"</c:if> type="radio" name="auditPrice" id="order_price_input-operateResult1" value="2" /> <label for="order_price_input-operateResult1">通过</label> 
+-						<input <c:if test="${not empty queryPrice or order.auditPrice == 2 }">disabled="disabled"</c:if><c:if test="${order.auditPrice == 3}">checked="checked"</c:if> type="radio" name="auditPrice" id="order_price_input-operateResult0" value="3" /> <label for="order_price_input-operateResult0">不通过</label></td>
+-					</tr>
+-					<tr>
+-						<td>意见说明</td>
+-						<td>
+-							<textarea <c:if test="${not empty queryPrice or order.auditPrice == 2}">readonly="readonly"</c:if> style="width: 600px;height: 60px;" name="auditDescription">${order.auditDescription }</textarea>
+-						</td>
+-						 
+-					</tr>
+-				</table>
+-			</form>
+-	</c:if>
+-		<div style="margin: 10px"></div>
+-		<table cellpadding="5">
+-			<tr>
+-				<td width="80px" align="right">定价人:</td>
+-				<td width="140px">${priceOperatorName }</td>
+-				<td width="80px" align="right">制单日期:</td>
+-				<td width="140px">${order.priceDate} </td>
+-				<td width="80px" align="right">审核人:</td>
+-				<td width="140px">${order.auditOperator }</td>
+-				<td width="80px" align="right">审核日期:</td>
+-				<td width="140px">${order.auditPriceDate}</td>
+-			</tr>
+-		</table>
+-</fieldset>
+-</div>
+-
+-<script type="text/javascript">
+-
+-var order_price_input_orderproduct_editIndex = undefined;
+-
+-$(function() {
+-	//修改
+-	$("#order-price-input-price-edit").click(function() {
+-		var row = $('#order-price-input-datagrid').datagrid('getSelected');
+-		if (row) {
+-			var rowIndex = $('#order-price-input-datagrid').datagrid('getRowIndex', row);
+-			if (order_price_input_orderproduct_editIndex == undefined && order_price_input_orderproduct_editIndex != rowIndex){
+-				$('#order-price-input-datagrid').datagrid('rejectChanges');
+-				$('#order-price-input-datagrid').datagrid('selectRow', rowIndex).datagrid('beginEdit', rowIndex);
+-				order_price_input_orderproduct_editIndex=rowIndex;
+-		    }else if(order_price_input_orderproduct_editIndex != undefined && order_price_input_orderproduct_editIndex != rowIndex){
+-		    	/* $('#order-price-input-datagrid').datagrid('selectRow', order_price_input_orderproduct_editIndex); */
+-		    	messagerShow("请先撤销编辑或保存，再修改!");
+-				return;
+-		    }
+-		}else{
+-			messagerShow("请选择要修改的记录!");
+-			return;
+-		}
+-	});
+-	
+-	// 确认
+-	$("#order-price-input-price-ok").click(function() {
+-		if (orderPriceInputEditing()){
+-			$('#order-price-input-datagrid').datagrid('acceptChanges');
+-		}
+-	});
+-	
+-	//撤销重量规格
+-	$("#order-price-input-undo").click(function() {
+-		if (undefined != order_price_input_orderproduct_editIndex) {
+-			$('#order-price-input-datagrid').datagrid('rejectChanges');
+-			order_price_input_orderproduct_editIndex = undefined;
+-		}
+-	});
+-	
+-	// 保存
+-	$("#order-price-input-price-submit-content").click(function() {
+-		$('#order-price-input-datagrid').datagrid('endEdit', order_price_input_orderproduct_editIndex);
+-		var row = $('#order-price-input-datagrid').datagrid('getSelected');
+-		var rowIndex = $('#order-price-input-datagrid').datagrid('getRowIndex', row);
+-		if (row && order_price_input_orderproduct_editIndex != undefined && order_price_input_orderproduct_editIndex == rowIndex) {
+-			saveOrderProductPrice(row);
+-		}else{
+-			messagerShow("请先修改，再保存!");
+-			return;
+-		}
+-	});
+-	
+-	// 保存基本信息
+-	$("#order_price_input-submit-base").click(function() {
+-		var obj = $(".order-price-input-fineness-class");
+-		var innerArray = new Array();
+-		var flat = true;
+-		$('.order-price-input-fineness-class').each(function(index){
+-			var finenessId = this.attributes['vid'].nodeValue;
+-			var goldPrice = this.value;
+-			if(finenessId && goldPrice){
+-				var json = {
+-						"finenessId" : finenessId,
+-						"goldPrice" : goldPrice
+-					};
+-				innerArray.push(json);
+-			}else{
+-				flat = false;
+-				messagerShow("请输入销售金价!");
+-				return;
+-			}
+-		});
+-		
+-		// 组装orderproduct
+-		var productArray = new Array();
+-		if (orderPriceInputEditing()){
+-			$('#order-price-input-datagrid').datagrid('acceptChanges');
+-		}
+-		var productRows = $("#order-price-input-datagrid").datagrid("getChecked");
+-		$.each(productRows,function(index,item){
+-			var json = {
+-					"id" : item.id,
+-					"baseCharge" : item.baseCharge,
+-					"extraCharge" : item.extraCharge,
+-					"processingFee" : item.processingFee,
+-					"salePrice" : item.salePrice
+-				};
+-			productArray.push(json);
+-		});
+-		console.info(productRows);
+-		if(flat){
+-			var arrayData = JSON.stringify(innerArray);
+-			var productData = JSON.stringify(productArray);
+-			$("#order-price-input-price-gold-price").val(arrayData);
+-			$("#order-price-input-price-order-product").val(productData);
+-			$.ajax({
+-				url : '<c:url value='/'/>admin/order/updatePrice',
+-				data : $("#order_price_input-form-base").serialize(),
+-				method : "post",
+-				dataType : 'json',
+-				success : function (data) {
+-					if(data.status=='success'){
+-						messagerShow("保存成功");
+-						refreshTab('订单定价详情');
+-						$("#order-price-datagrid").datagrid("reload");
+-					}else{
+-						messagerShow(data.message);
+-					}
+-				},
+-				error:function(data){
+-					alert(data.responseText);
+-				}
+-			});
+-		}
+-	});
+-	
+-});
+-
+-function orderPriceInputEditing(){
+-    if (undefined == order_price_input_orderproduct_editIndex){
+-    	return true;
+-    }
+-    if ($('#order-price-input-datagrid').datagrid('validateRow', order_price_input_orderproduct_editIndex)) {
+-        $('#order-price-input-datagrid').datagrid('endEdit', order_price_input_orderproduct_editIndex);
+-        order_price_input_orderproduct_editIndex = undefined;
+-        return true;
+-    } else {
+-        return false;
+-    }
+-}
+-
+-function saveOrderProductPrice(row){
+-		$.ajax({
+-			url : '<c:url value='/'/>admin/orderProduct/save',
+-			data : row,
+-			method : "post",
+-			dataType : 'json',
+-			success : function (data) {
+-				if(data.status=='success'){
+-					messagerShow("保存成功");
+-					order_price_input_orderproduct_editIndex = undefined;
+-					$('#order-price-input-datagrid').datagrid('reload');
+-				}else{
+-					messagerShow(data.message);
+-					$('#order-price-input-datagrid').datagrid('beginEdit', order_price_input_orderproduct_editIndex);
+-				}
+-			},
+-			error:function(data){
+-				alert(data.responseText);
+-			}
+-		});
+-}
+-
+-//双击事件
+-function orderPriceInputDblClickRow (rowIndex, rowData) {
+-	<c:if test="${empty auditPrice and empty queryPrice}">
+-		if(order_price_input_orderproduct_editIndex == undefined && order_price_input_orderproduct_editIndex != rowIndex){
+-			if (orderPriceInputEditing()){
+-	               $('#order-price-input-datagrid').datagrid('selectRow', rowIndex).datagrid('beginEdit', rowIndex);
+-	               order_price_input_orderproduct_editIndex = rowIndex;
+-	           }
+-	  	  }else if(order_price_input_orderproduct_editIndex != undefined && order_price_input_orderproduct_editIndex != rowIndex){
+-		    	messagerShow("请先撤销编辑或保存，再修改!");
+-				return;
+-		 }
+-	</c:if>
+-}
+-	
+-
+-// 审核
+-$("#order-price-input-audit-form-submit").click(function() {
+-	$('#order-price-input-audit-form').form('submit', {
+-		onSubmit : function (param) {
+-			var operateResult = $("input[name='auditPrice']:checked").length;
+-			if (!operateResult) {
+-				messagerShow("请选择审核状态");
+-				return false;
+-			}
+-		},
+-		success : function (data) {
+-			var data = eval('(' + data + ')');
+-			if (data.status == 'success') {
+-				messagerShow("审核成功");
+-				refreshTab('订单定价详情');
+-				$("#order-price-datagrid").datagrid("reload");
+-			} else {
+-				messagerShow("审核出错");
+-			}
+-		}
+-	});
+-});
+-
+-//默认编辑
+-function defaultEditRow(data){
+-	/* var rows=data.rows;
+-	if(rows && rows.length>0){
+-		 for(var i=0;i<rows.length;i++){
+-			 $('#order-price-input-datagrid').datagrid('beginEdit',i);
+-		 } 
+-	} */
+-}
+-</script>
+Index: web/WEB-INF/jsp/admin/main.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/main.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/main.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -143,7 +143,6 @@
+ 	}
+ }
+ 
+-
+ //刷新Tab页
+ function refreshTab(tabTitle){
+ 	if(mainTabs.tabs('exists',tabTitle)) {
+@@ -435,7 +434,6 @@
+ 					<b2b:permitted code="1301"><li data-options="attributes:{url:'admin/order'}"><span>销售订单管理</span></li></b2b:permitted>
+ <%-- 					<b2b:permitted code="1302"><li data-options="attributes:{url:'admin/saleReturnNote'}"><span>销售退货单列表</span></li></b2b:permitted> --%>
+ 					<b2b:permitted code="1304"><li data-options="attributes:{url:'admin/order/audit'}"><span>销售订单审核</span></li></b2b:permitted>
+-					<b2b:permitted code="1305"><li data-options="attributes:{url:'admin/order/price'}"><span>销售订单定价</span></li></b2b:permitted>
+ 				</ul>
+ 			</div>
+ 			</b2b:permitted>
+Index: web/WEB-INF/jsp/admin/vas_data_input.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/vas_data_input.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/vas_data_input.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -161,12 +161,6 @@
+ 		messagerShow("请先选择图片");
+ 		return;
+ 	}
+-	else{
+-		if(!isImage($("#"+input).val())){
+-			messagerShow("只能上传图片文件。");
+-			return;
+-		}
+-	}
+ 	ajaxFileUpload(input,jpg,vas_data_input_id,type,callback);
+ }
+ //上传图片后的回调
+Index: web/WEB-INF/jsp/admin/member_input.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/member_input.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/member_input.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -442,11 +442,10 @@
+ // });
+ 
+ function member_input_ajaxFileUpload(input, jpg,memberId,type,callback){
+-	if (!isImage($("#"+input).val())) {
++	if (!$("#"+input).val()) {
+ // 	if(!member_input_memberId){
+ // 		messagerShow('请先保存会员信息');
+-		messagerShow("请先选择图片文件。");
+-		$("#"+input).val("");
++		messagerShow("请先选择图片");
+ 		return;
+ 	}
+ 	if(jpg!='logo.jpg'){
+Index: web/WEB-INF/jsp/admin/search_directinvoice_order_list.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/search_directinvoice_order_list.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/search_directinvoice_order_list.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -37,14 +37,6 @@
+ 							data: orderStatusArray
+ 							" />
+ 					</td>
+-					<td>定价状态</td>
+-					<td><input id="search-order-dialog-list-status" class="easyui-combobox" readonly="readonly" name="order.auditPrice" value="${orderBO.auditPrice}" data-options="
+-					editable:false,
+-							valueField: 'code',
+-							textField: 'name',
+-							data: auditPriceStatusArray
+-							" />
+-					</td>
+ 					<td>下单时间</td>
+ 					<td><input type="text" name="startDate" class="easyui-datebox" />&nbsp;-&nbsp;<input type="text" name="endDate" class="easyui-datebox" /></td>
+ 				</tr>
+@@ -60,7 +52,7 @@
+ 	</form>
+ </div>
+ <table class="easyui-datagrid" id="search-distribution-dialog-list-datagrid" fitColumns="true" pagination="true" singleSelect="false" striped="true" idField="id" method="post" rownumbers="true" fit="true" pageSize="40"
+-	toolbar="#search-distribution-dialog-list-toolbar" url="<c:url value='/'/>admin/order/searchOrder?memberIds=${directInvoiceNoteBO.directInvoiceNote.memberId}&orderStatusArray=${directInvoiceNoteBO.orderStatusArray}&auditPrice=2">
++	toolbar="#search-distribution-dialog-list-toolbar" url="<c:url value='/'/>admin/order/searchOrder?memberIds=${directInvoiceNoteBO.directInvoiceNote.memberId}&orderStatusArray=${directInvoiceNoteBO.orderStatusArray}">
+ 	<thead>
+ 		<tr>
+ 			<th data-options="field:'code',width:80">单据编号</th>
+Index: web/WEB-INF/jsp/admin/vas_input.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/vas_input.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/vas_input.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -161,12 +161,6 @@
+ 		messagerShow("请先选择图片");
+ 		return;
+ 	}
+-	else{
+-		if(!isImage($("#"+input).val())){
+-			messagerShow("只能上传图片文件。");
+-			return;
+-		}
+-	}
+ 	ajaxFileUpload(input,jpg,vas_input_id,type,callback);
+ }
+ //上传图片后的回调
+Index: web/WEB-INF/jsp/admin/course_series_input.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/course_series_input.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/course_series_input.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -120,11 +120,6 @@
+ 			style: {right: '', top: document.body.scrollTop + document.documentElement.scrollTop, bottom: ''} 
+ 		});
+ 		return;
+-	}else{
+-			if(!isImage($("#"+file).val())){
+-				messagerShow("只能上传图片文件。");
+-				return;
+-			}
+ 	}
+ 	ajaxFileUpload(file, id+".jpg", '', type, funName);
+ }
+Index: web/WEB-INF/jsp/admin/search_sale_order_list.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/search_sale_order_list.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/search_sale_order_list.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -4,11 +4,6 @@
+ <script type="text/javascript">
+ 	var orderStatusMap = <b2b:enum clazz='com.eegoo.b2b.entity.Order$Status' type="map"/>;
+ 	var orderStatusArray = <b2b:enum clazz='com.eegoo.b2b.entity.Order$HavingStatus' type="array"/>;
+-	
+-	var auditPriceStatusMap = <b2b:enum clazz='com.eegoo.b2b.entity.Order$AuditPriceStatus' type="map"/>;
+-	var auditPriceStatusArray = <b2b:enum clazz='com.eegoo.b2b.entity.Order$AuditPriceStatus' type="array"/>;
+-	
+-	
+ 	$("#search-order-dialog-list-serach-submit").click(function() {
+ 		$('#search-order-dialog-list-datagrid').datagrid('unselectAll');
+ 		var param = $('#search-order-dialog-list-search-form').serializeObject();
+@@ -41,14 +36,6 @@
+ 							data: orderStatusArray
+ 							" />
+ 					</td>
+-					<td>定价状态</td>
+-					<td><input id="search-order-dialog-list-status" class="easyui-combobox"  name="order.auditPrice" data-options="
+-					editable:false,
+-							valueField: 'code',
+-							textField: 'name',
+-							data: auditPriceStatusArray
+-							" />
+-					</td>
+ 					<td>下单时间</td>
+ 					<td><input type="text" name="startDate" class="easyui-datebox" />&nbsp;-&nbsp;<input type="text" name="endDate" class="easyui-datebox" /></td>
+ 				</tr>
+@@ -87,7 +74,6 @@
+ 			<th data-options="field:'receiver',width:80">收货人</th>
+ 			<th data-options="field:'receiverTel',width:80">收货地址</th> -->
+ 			<th data-options="field:'status',width:50,formatter:function(value,row,index){return orderStatusMap[value];}">订单状态</th>
+-			<th data-options="field:'auditPrice',width:50,formatter:function(value,row,index){return auditPriceStatusMap[value];}">定价状态</th>
+ 			<th data-options="field:'createDate',width:90">下单日期</th>
+ 		</tr>
+ 	</thead>
+Index: web/WEB-INF/jsp/admin/order_query.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/order_query.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/order_query.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -15,7 +15,7 @@
+ 	});
+  
+ 	
+-	$("#order-query-view").click(function() { 
++	$("#order-query-view"         ).click(function() { 
+ 		var row = $('#order-query-datagrid').datagrid('getSelected');
+ 		if (row && row.id) {
+ 			reOpenTab('销售订单详情', '', '<c:url value='/'/>admin/order/' + row.id + '/view');
+Index: web/WEB-INF/jsp/admin/product_series_input.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/product_series_input.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/product_series_input.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -237,11 +237,6 @@
+ 			messagerShow("请先选择商品套系图片");
+ 			return;
+ 		}
+-		else{
+-			if(!isImage($("#product-series-input-file-sp").val())){
+-				messagerShow("只能上传图片文件。");
+-			}
+-		}
+ 		ajaxFileUpload(file, imgName, $("#product-series-input-id").val(), type, funName);
+ 	}
+ 	function productSeriesLpCallback(data) {
+@@ -254,11 +249,6 @@
+ 		if (!$("#product-series-input-file-sp").val()) {
+ 			messagerShow("请先选择商品套系图片");
+ 			return;
+-		}else{
+-			if(!isImage($("#product-series-input-file-sp").val())){
+-				messagerShow("只能上传图片文件。");
+-				return;
+-			}
+ 		}
+ 		ajaxFileUpload(file, imgName, $("#product-series-input-id").val(), type, funName);
+ 	}
+Index: web/WEB-INF/jsp/admin/member_level_input.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/member_level_input.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/member_level_input.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -38,8 +38,8 @@
+ 	});
+ 	
+ 	function member_level_input_ajaxFileUpload(input,imgName,type,callback){
+-		if (!isImage($("#"+input).val())) {
+-			messagerShow("只能上传择图片文件!");
++		if (!$("#"+input).val()) {
++			messagerShow("请先选择图片!");
+ 			return;
+ 		}
+ 		ajaxFileUpload(input,imgName, $("#member_level_input_id").val(), type, callback);
+Index: web/WEB-INF/jsp/admin/pictureSetting_input.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/pictureSetting_input.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/pictureSetting_input.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -176,12 +176,6 @@
+ 		messagerShow("请先选择图片");
+ 		return;
+ 	}
+-	else{
+-		if(!isImage($("#"+input).val())){
+-			messagerShow("只能上传图片文件。");
+-			return;
+-		}
+-	}
+ 	var peo = $('#pictureSetting_input_position').combobox('getValue');
+ 		//登录页图片、注册页图片，key值给定固定值，不用primarykey做图片路径，
+ 	if(peo == '4'){
+Index: web/WEB-INF/jsp/admin/directinvoicenote_input.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/directinvoicenote_input.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/directinvoicenote_input.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -207,12 +207,12 @@
+ 		height: 400,
+ 		closed: false,
+ 		cache: false,
+-		href: "<c:url value='/'/>purchase/purchaseOrder/searchSaleOrderDialog?order.memberUsername="+memberName+"&havingStatus=40",
++		href: "<c:url value='/'/>admin/directInvoiceNote/searchDirectInvoiceOrderDialog?memberId="+memberId+"&memberName="+memberName,
+ 		modal: true,
+ 		onClose : function() {
+                $(this).dialog('destroy');
+            },
+-		/* buttons: [{
++		buttons: [{
+ 			text: '确定',
+ 			iconCls: 'jewel-icon-save',
+ 			plain:true,
+@@ -220,6 +220,8 @@
+ 				var datagrid=$('#distribution_outbound-list-dialog').find("#search-distribution-dialog-list-datagrid");
+ 				var orders=datagrid.datagrid('getSelections');
+ 				
++			/* 	var directInvoiceOrderInputOrderCodes = new Array();
++				var directInvoiceOrderInputOrderIds = new Array(); */
+ 				
+ 				if(orders && orders.length>0){
+ 					for(var i=0; i<orders.length;i++){
+@@ -246,38 +248,7 @@
+ 					messagerShow("请选择销售订单");
+ 				}
+ 			}
+-		}] */
+-		
+-		buttons: [{
+-			text: '确定',
+-			iconCls: 'jewel-icon-save',
+-			plain:true,
+-			handler: function() {
+-				var datagrid=$('#distribution_outbound-list-dialog').find("#search-order-dialog-list-datagrid");
+-				var orders=datagrid.datagrid('getSelections');
+-				if(orders && orders.length>0){
+-					var orderCodes = "";
+-					var orderIds = "";
+-					for(var i=0; i<orders.length;i++){
+-							if(orderCodes==""){
+-								orderCodes = orders[i].code;
+-								orderIds = orders[i].id;
+-							}else{
+-								orderCodes = orderCodes + "," + orders[i].code;
+-								orderIds = orderIds + "," + orders[i].id;
+-							}
+-					}
+-					
+-					$('#distribution_outbound_input_orderCode').val(orderCodes);
+-					$('#distribution_outbound_input_orderId').val(orderIds);
+-					$('#distribution_outbound_input_orderCodeText').val(orderCodes);
+-					$("#distribution_outbound_input_orderCodeText").validatebox('validate');
+-					$('#distribution_outbound-list-dialog').dialog("close");
+-				}else{
+-					messagerShow("请选择销售订单");
+-				}
+-			}
+-	}]
++		}]
+ 		});
+ 	});
+ 
+@@ -386,7 +357,6 @@
+ 							html += '		<tr class="purchaseTr"><td width="130"><input name="productId" type="hidden" value="'+defaultData(data.productId)+'"/>';
+ 							html += '			<input name="purchaseOrderProductId" type="hidden" value="'+defaultData(item.id)+'"/>';
+ 							html += '			<input name="productStandardId" type="hidden" value="'+defaultData(item.productStandardId)+'"/>';
+-							html += '			<input name="productStandardName" type="hidden" value="'+defaultData(item.weightStandard)+'"/>';
+ 							html += '			<div style="width:100px;">'+defaultData(item.weightStandard)+'</div></td>';
+ 							html += '			<td width="100"><input min="0" type="text" class="easyui-numberbox"  data-options="min:0,precision:2" step="1.*" name="totalWeight" style="width:100px;" onchange="calNum(this)"/></td>';
+ 							html += '			<td width="60"><input name="quantity" min="0" type="text" class="easyui-numberbox"  data-options="min:0,precision:0" step="1" style="width:60px;"  onchange="calNum(this)"/></td>';
+@@ -463,7 +433,7 @@
+ 					var data = eval('(' + data + ')');
+ 					if(data.status=='success'){
+ 						messagerShow(data.message);
+-						closeTab('添加直接配货单');
++						closeTab('添加配货单');
+ 						reOpenTab('配货出库单详情', '', '<c:url value='/'/>admin/directInvoiceNote/' + data.directInvoiceNoteId + '/edit');
+ 						$('#distribution_outbound_list-datagrid').datagrid('reload');
+ 					}else{
+@@ -489,8 +459,6 @@
+ 			var costPrices = $tmp.find('td input[name="costPrice"]');
+ 			var productIds = $tmp.find('td input[name="productId"]');
+ 			var productStandardIds = $tmp.find('td input[name="productStandardId"]');
+-			var productStandardNames = $tmp.find('td input[name="productStandardName"]');
+-			console.info(productStandardNames);
+ 			var purchaseOrderProductIds = $tmp.find('td input[name="purchaseOrderProductId"]');
+ 			var totalWeights = $tmp.find('td input[name=totalWeight]');
+ 			var weights = $tmp.find('td input[name=weight]');
+@@ -508,7 +476,6 @@
+ 					costPrice : costPrices[0].value,
+ 					productId : productIds[j].value,
+ 					productStandardId : productStandardIds[j].value,
+-					productStandardName : productStandardNames[j].value,
+ 					purchaseProductId : purchaseOrderProductIds[j].value,
+ 					totalWeight : totalWeights[j].value,
+ 					quantity : quantitys[j].value,
+@@ -591,7 +558,6 @@
+ 		var costPrices = $tmp.find('td input[name="costPrice"]');
+ 		var productIds = $tmp.find('td input[name="productId"]');
+ 		var productStandardIds = $tmp.find('td input[name="productStandardId"]');
+-		var productStandardNames = $tmp.find('td input[name="productStandardName"]');
+ 		var purchaseProductIds = $tmp.find('td input[name="purchaseProductId"]');
+ 		var totalWeights = $tmp.find('td input[name=totalWeight]');
+ 		var weights = $tmp.find('td input[name=weight]');
+Index: web/WEB-INF/jsp/admin/order_list.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/order_list.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/order_list.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -66,28 +66,27 @@
+ 			messagerShow("请选择订单！");
+ 		}
+ 	});
++	
+ 	//完成
+ 	$("#order-list-sign").click(function() { 
+ 		var row = $('#order-list-datagrid').datagrid('getSelected');
+ 		if (row && row.id) {
+ 			if(row.status == 49){
+-				
+ 				$.messager.confirm('确认', '您是否要完成当前选中的订单？', function (r) {
+ 					if (r) {
+-			
+-										$.ajax({
+-											url : '<c:url value='/'/>admin/order/' + row.id + '/sign',
+-											type : 'GET',
+-											dataType : 'json',
+-											success : function(data){
+-												$('#order-list-datagrid').datagrid('reload');
+-												if (data.status == 'success') {
+-													messagerShow(data.message);
+-												} else {
+-													messagerShow(data.message);
+-												}
+-											}
+-										});
++						$.ajax({
++							url : '<c:url value='/'/>admin/order/' + row.id + '/sign',
++							type : 'GET',
++							dataType : 'json',
++							success : function(data){
++								$('#order-list-datagrid').datagrid('reload');
++								if (data.status == 'success') {
++									messagerShow(data.message);
++								} else {
++									messagerShow(data.message);
++								}
++							}
++						});
+ 					}
+ 				});
+ 			}else{
+@@ -97,7 +96,7 @@
+ 			messagerShow("请选择订单！");
+ 		}
+ 	});
+-	$("#order-list-cancel"       ).click(function() { 
++	$("#order-list-cancel").click(function() { 
+ 		var row = $('#order-list-datagrid').datagrid('getSelected');
+ 		if (row && row.id) {
+ // 			debugger;
+Index: web/WEB-INF/jsp/admin/course_input.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/course_input.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/course_input.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -300,11 +300,7 @@
+ 		if (!$("#course-input-file").val()) {
+ 			messagerShow("请先选择课程图片");
+ 			return;
+-		}else{
+-			if(!isImage($("#course-input-file").val())){
+-			messagerShow("只能上传图片文件。");
+-			return;
+-		}}
++		}
+ 		ajaxFileUpload(file, imgName, $("#course-input-id").val(), type, funName);
+ 	}
+ 	function courseCallback(data) {
+Index: web/WEB-INF/jsp/admin/product_promotion_input.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/product_promotion_input.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/product_promotion_input.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -226,11 +226,6 @@
+ 		if (!$("#product-promotion-input-file").val()) {
+ 			messagerShow("请先选择商品活动图片");
+ 			return;
+-		}else{
+-			if(!isImage($("#"+"file").val())){
+-				messagerShow("只能上传图片文件。");
+-				return;
+-			}
+ 		}
+ 		ajaxFileUpload(file, imgName, $("#product-promotion-input-id").val(), type, funName);
+ 	}
+Index: web/WEB-INF/jsp/admin/material_input.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/material_input.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/material_input.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -289,12 +289,6 @@
+ 			messagerShow("请先选择图片");
+ 			return;
+ 		}
+-		else{
+-			if(!isImage($("#view-material-dialog-picture-file").val())){
+-				messagerShow("只能上传图片文件。");
+-				return;
+-			}
+-		}
+ 		ajaxFileUpload(file, imgName, $("#id").val(), type, funName);
+ 	}
+ 	function materialPictureCallback(data) {
+Index: web/WEB-INF/jsp/admin/directinvoicenote_edit.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/directinvoicenote_edit.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/directinvoicenote_edit.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -150,7 +150,6 @@
+ 										<td width="84">
+ 										<input name="productId" type="hidden" value="${data.productId}"/>
+ 										<input name="productStandardId" type="hidden" value="${item.productStandardId}"/>
+-										<input name="productStandardName" type="hidden" value="${item.productStandardName}"/>
+ 										<input name="purchaseProductId" type="hidden" value="${item.purchaseProductId }"/>
+ 										<div style="width:84px;">${item.productStandardName }</div>
+ 										</td>
+@@ -462,7 +461,6 @@
+ 		var costPrices = $tmp.find('td input[name="costPrice"]');
+ 		var productIds = $tmp.find('td input[name="productId"]');
+ 		var productStandardIds = $tmp.find('td input[name="productStandardId"]');
+-		var productStandardNames = $tmp.find('td input[name="productStandardName"]');
+ 		var purchaseProductIds = $tmp.find('td input[name="purchaseProductId"]');
+ 		var totalWeights = $tmp.find('td input[name=totalWeight]');
+ 		var weights = $tmp.find('td input[name=weight]');
+@@ -514,7 +512,6 @@
+ 			var costPrices = $tmp.find('td input[name="costPrice"]');
+ 			var productIds = $tmp.find('td input[name="productId"]');
+ 			var productStandardIds = $tmp.find('td input[name="productStandardId"]');
+-			var productStandardNames = $tmp.find('td input[name="productStandardName"]');
+ 			var purchaseProductIds = $tmp.find('td input[name="purchaseProductId"]');
+ 			var totalWeights = $tmp.find('td input[name=totalWeight]');
+ 			var weights = $tmp.find('td input[name=weight]');
+@@ -532,7 +529,6 @@
+ 						costPrice : costPrices[0].value,
+ 						productId : productIds[j].value,
+ 						productStandardId : productStandardIds[j].value,
+-						productStandardName : productStandardNames[j].value,
+ 						purchaseProductId : purchaseProductIds[j].value,
+ 						totalWeight : totalWeights[j].value,
+ 						quantity : quantitys[j].value,
+Index: web/WEB-INF/jsp/admin/directinvoicenote_list.jsp
+===================================================================
+--- web/WEB-INF/jsp/admin/directinvoicenote_list.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/admin/directinvoicenote_list.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -4,7 +4,7 @@
+ <script type="text/javascript">
+ 
+ $("#distribution_outbound_list-add").click(function () {
+-	reOpenTab('添加直接配货单', '', '<c:url value='/'/>admin/directInvoiceNote/add');
++	reOpenTab('添加配货单', '', '<c:url value='/'/>admin/directInvoiceNote/add');
+ });
+ 
+ //导出
+Index: web/WEB-INF/jsp/pay/payment.jsp
+===================================================================
+--- web/WEB-INF/jsp/pay/payment.jsp	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/jsp/pay/payment.jsp	(.../pzh/b2b)	(revision 14072)
+@@ -46,3 +46,4 @@
+ 	 return String(stringval);
+ }
+ </script>
++
+Index: web/WEB-INF/web.xml
+===================================================================
+--- web/WEB-INF/web.xml	(.../trunk/b2b)	(revision 14072)
++++ web/WEB-INF/web.xml	(.../pzh/b2b)	(revision 14072)
+@@ -115,7 +115,7 @@
+ 		</url-pattern>
+ 	</servlet-mapping>
+ 	<session-config>
+-		<session-timeout>300</session-timeout>
++		<session-timeout>60</session-timeout>
+ 		<tracking-mode>COOKIE</tracking-mode>
+ 	</session-config>
+ 	
+Index: web/ui/admin/js/ajaxfileupload.js
+===================================================================
+--- web/ui/admin/js/ajaxfileupload.js	(.../trunk/b2b)	(revision 14072)
++++ web/ui/admin/js/ajaxfileupload.js	(.../pzh/b2b)	(revision 14072)
+@@ -257,13 +257,4 @@
+ 	}
+ }
+ 
+-//判断图片文件
+-function isImage(fileName){
+-	var extName=fileName.substr(fileName.lastIndexOf(".")).toLowerCase();
+-	if(extName==".jpg"||extName==".png"||extName==".gif"||extName==".bmp"){
+-		return true;
+-	}
+-	return false;
+-}
+ 
+-
+Index: b2b-pay-prod.xml
+===================================================================
+--- b2b-pay-prod.xml	(.../trunk/b2b)	(revision 14072)
++++ b2b-pay-prod.xml	(.../pzh/b2b)	(revision 14072)
+@@ -60,6 +60,10 @@
+ 				<include name="**/*.tld" />
+ 				<include name="*.xml" />
+ 				<include name="*.properties" />
++				<include name="abc.truststore" />
++				<include name="*.pfx" />
++				<include name="watermark.png" />
++				<include name="TrustPay.cer" />
+ 			</fileset>
+ 		</copy>
+ 	</target>
+@@ -105,6 +109,8 @@
+ <!--	<sshexec port="20000" host="${deploy.host}" username="${deploy.username}" password="${deploy.password}" command="sh /usr/local/tomcat/bin/shutdown.sh" trust="true" failonerror="false" />	-->
+ 		<sshexec port="20000" host="${deploy.host}" username="${deploy.username}" password="${deploy.password}" command="killall -9 java" trust="true" failonerror="false" />
+ 		<sleep seconds="5" />
++		<sshexec port="20000" host="${deploy.host}" username="${deploy.username}" password="${deploy.password}" command="chown -R www.root /data" trust="true" failonerror="false" />
++		<sleep seconds="5" />
+ 		<sshexec port="20000" host="${deploy.host}" username="${deploy.username}" password="${deploy.password}" command="sh /usr/local/tomcat/bin/startup.sh" trust="true" failonerror="false" />
+ 	</target>
+ </project>
+\ No newline at end of file
+Index: b2b-pay-beta.xml
+===================================================================
+--- b2b-pay-beta.xml	(.../trunk/b2b)	(revision 14072)
++++ b2b-pay-beta.xml	(.../pzh/b2b)	(revision 14072)
+@@ -42,6 +42,8 @@
+ 		<copy description="2.复制java代码中的配置 DaoImpl.xml" todir="${build.dir}/${ant.project.name}/WEB-INF/classes" includeemptydirs="true" verbose="false" overwrite="true">
+ 			<fileset dir="${src.dir}">
+ 				<include name="**/*DaoImpl.xml" />
++				
++				
+ 			</fileset>
+ 		</copy>
+ 		<jar description="将上面的2步打到jar里面" destfile="${dist.dir}/${ant.project.name}/WEB-INF/lib/${ant.project.name}.jar">
+@@ -60,6 +62,10 @@
+ 				<include name="**/*.tld" />
+ 				<include name="*.xml" />
+ 				<include name="*.properties" />
++				<include name="abc.truststore" />
++				<include name="*.pfx" />
++				<include name="watermark.png" />
++				<include name="TrustPay.cer" />
+ 			</fileset>
+ 		</copy>
+ 	</target>
+@@ -105,6 +111,8 @@
+ <!--	<sshexec port="20000" host="${deploy.host}" username="${deploy.username}" password="${deploy.password}" command="sh /usr/local/tomcat/bin/shutdown.sh" trust="true" failonerror="false" />	-->
+ 		<sshexec port="20000" host="${deploy.host}" username="${deploy.username}" password="${deploy.password}" command="killall -9 java" trust="true" failonerror="false" />
+ 		<sleep seconds="5" />
+-		<sshexec port="20000" host="${deploy.host}" username="${deploy.username}" password="${deploy.password}" command="sh /usr/local/tomcat/bin/startup.sh" trust="true" failonerror="false" />
++		<sshexec port="20000" host="${deploy.host}" username="${deploy.username}" password="${deploy.password}" command="chown -R www.root /data" trust="true" failonerror="false" />
++		<sleep seconds="5" />
++		<sshexec port="20000" host="${deploy.host}" username="${deploy.username}" password="${deploy.password}" command="sudo -u www /usr/local/tomcat/bin/startup.sh" trust="true" failonerror="false" />
+ 	</target>
+ </project>
+\ No newline at end of file
+
+Property changes on: .
+___________________________________________________________________
+Added: svn:mergeinfo
+   Merged /branches/b2b20150211180908:r13394-14071
+   Merged /test/trunk/b2b:r13390-13392
+   Merged /tags/b2b20150211180908:r13393
+
