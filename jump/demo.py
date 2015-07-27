@@ -60,13 +60,19 @@ def agent_auth(transport, username):
 
 def manual_auth(username, hostname):
     default_auth = 'p'
-    auth = input('Auth by (p)assword, (r)sa key, or (d)ss key? [%s] ' % default_auth)
+    if len(sys.argv) > 3:
+    	auth = sys.argv[3]
+    else:
+    	auth = input('Auth by (p)assword, (r)sa key, or (d)ss key? [%s] ' % default_auth)
     if len(auth) == 0:
-        auth = default_auth
+    	auth = default_auth
 
     if auth == 'r':
         default_path = os.path.join(os.environ['HOME'], '.ssh', 'id_rsa')
-        path = input('RSA key [%s]: ' % default_path)
+	if len(sys.argv) > 4:
+            path = sys.argv[4]
+        else:
+	    path = input('RSA key [%s]: ' % default_path)
         if len(path) == 0:
             path = default_path
         try:
@@ -77,7 +83,10 @@ def manual_auth(username, hostname):
         t.auth_publickey(username, key)
     elif auth == 'd':
         default_path = os.path.join(os.environ['HOME'], '.ssh', 'id_dsa')
-        path = input('DSS key [%s]: ' % default_path)
+	if len(sys.argv) > 4:
+            path = sys.argv[4]
+        else:
+            path = input('DSS key [%s]: ' % default_path)
         if len(path) == 0:
             path = default_path
         try:
@@ -87,7 +96,10 @@ def manual_auth(username, hostname):
             key = paramiko.DSSKey.from_private_key_file(path, password)
         t.auth_publickey(username, key)
     else:
-        pw = getpass.getpass('Password for %s@%s: ' % (username, hostname))
+	if len(sys.argv) > 4:
+            pw = sys.argv[4]
+        else:
+            pw = getpass.getpass('Password for %s@%s: ' % (username, hostname))
         t.auth_password(username, pw)
 
 
@@ -148,7 +160,9 @@ try:
         print('*** Host key OK.')
 
     # get username
-    if username == '':
+    if len(sys.argv) > 2:
+    	username = sys.argv[2]
+    elif username == '':
         default_username = getpass.getuser()
         username = input('Username [%s]: ' % default_username)
         if len(username) == 0:
