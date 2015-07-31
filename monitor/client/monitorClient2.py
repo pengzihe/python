@@ -5,7 +5,7 @@ HOST = '0.0.0.0'
 PORT = 50000
 monitor_dic = {}
 
-hostname = 'localhost'
+hostname = 'mico'
 
 def send_status_data(action,status_data):  #action:differentiate type  status_data:send values
 
