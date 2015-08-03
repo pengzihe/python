@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from services import linux
 class BaseTemplate:
 	name = None
 	groups = []
@@ -8,9 +9,22 @@ class BaseTemplate:
 	
 class LinuxGenericServices(BaseTemplate):
 	name = 'Linux Generic Services'
-	groups = ['BJ']
+	groups = ['BJ','HK']
 	hosts = ['zero']
 	service_dic = {
-		'cpu':
-		'upCheck':
+		'cpu': linux.cpu(),
+		'upCheck':linux.upCheck(),
 	}
+
+class WindowsGenericServices(BaseTemplate):
+	name = 'Windows Generic Services'
+	groups = ['HK']
+	service_dic = {
+		'upCheck':linux.upCheck(),
+	}
+
+enabled_templates = (
+	LinuxGenericServices(),
+	WindowsGenericServices(),
+)
+

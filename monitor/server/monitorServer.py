@@ -19,6 +19,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 			print 'send back confirmation signal'
 			self.request.send('ReadyToReceive')
 			status_data = json.loads(self.request.recv(8192))
+			status_data['last_recevied'] = time.time()
 			if host_dic.has_key(status_data['hostname']):
 				host_dic[status_data['hostname']] = status_data
 		elif data_type == "PushDataIntoRedis":
