@@ -1,0 +1,60 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>无标题文档</title>
+
+<script type="application/javascript" src="jquery-2.1.4.min.js"> </script>
+
+<script>
+$(document).ready(
+	function()
+	{
+		$("#btn1").click(
+			function()
+			{
+				$("p").css({"background-color":"yellow","font-size":"200%"});
+				//$("div").remove();
+			}
+		);
+		$("#btn2").click(
+			function()
+			{
+				$("ol").append("<li>Appended item</li>");
+			}
+		)
+	}
+)
+</script>
+<!--<style>
+div {background-color:red; border:1px solid black; height:200px; width:200px;}
+.blue {color:blue;}
+</style>
+-->
+
+</head>
+
+<body>
+<div>
+<p >This is a paragraph.</p>
+<p>This is another paragraph.</p>
+</div>
+<ol>
+    <li>List item 1</li>
+    <li>List item 2  {{key}} </li>
+    <li>List item 3</li>
+</ol>
+
+<ol>
+	{% for name in name_info %}	
+		{% if forloop.counter|divisibleby:2  %}
+			<li style="color:red">{{name}}</li>
+		{% else %}
+			<li>{{ name }}</li>
+		{% endif %}
+	{% endfor %}
+</ol>
+</body>
+</html>
+
