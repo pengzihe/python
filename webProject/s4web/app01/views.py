@@ -21,3 +21,6 @@ def plus_hour(request,hour):
 	h = int(hour)
 	dt = ct + datetime.timedelta(hours = h)
 	return HttpResponse('Current Time plus %s <br/> The new time: %s' % (ct,dt))
+
+def index(request):
+	return render_to_response("index.html")

@@ -2,7 +2,7 @@ from django.conf.urls import patterns, include, url
 
 from django.contrib import admin
 
-from app01.views import second
+from app01.views import *
 admin.autodiscover()
 
 urlpatterns = patterns('',
@@ -14,4 +14,5 @@ urlpatterns = patterns('',
        (r'^sayhi/$','app01.views.hello'),
        (r'^second/$',second),
        (r'^time/plus/(\d+)/','app01.views.plus_hour'),
+	(r'^$',index)
 )
