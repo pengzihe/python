@@ -14,5 +14,9 @@ urlpatterns = patterns('',
        (r'^sayhi/$','app01.views.hello'),
        (r'^second/$',second),
        (r'^time/plus/(\d+)/','app01.views.plus_hour'),
-	(r'^$',index)
+	(r'^$',index),
+	(r'^linux/$',linux_bbs),
+	(r'^python/$',python_bbs),
+	(r'^login_auth/$',login_auth),
+	(r'^login/$',login)
 )

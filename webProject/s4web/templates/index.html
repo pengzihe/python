@@ -9,7 +9,7 @@ http-equiv="X-UA-Compatible">
     
 <META name="description" content="">     
 <META name="author" content="">     <LINK href="../../favicon.ico" rel="icon">   
-  <TITLE>Fixed Top Navbar Example for Bootstrap</TITLE>     <!-- Bootstrap core CSS --> 
+  <TITLE>Mico's blog!</TITLE>     <!-- Bootstrap core CSS --> 
     <LINK href="/static/css/bootstrap.min.css" 
 rel="stylesheet">     <!-- Custom styles for this template -->     <LINK href="/static/css/navbar-fixed-top.css" 
 rel="stylesheet">     <!-- Just for debugging purposes. Don't actually copy these 2 lines! --> 
@@ -23,57 +23,143 @@ rel="stylesheet">     <!-- Just for debugging purposes. Don't actually copy thes
     <![endif]--> 
   
 <META name="GENERATOR" content="MSHTML 11.00.9600.16476"></HEAD>   
-<BODY><!-- Fixed navbar -->     <NAV class="navbar navbar-default navbar-fixed-top">
-<DIV class="container">
-<DIV class="navbar-header"><BUTTON class="navbar-toggle collapsed" 
-aria-expanded="false" aria-controls="navbar" type="button" data-toggle="collapse" 
-data-target="#navbar"><SPAN class="sr-only">Toggle navigation</SPAN>             
-<SPAN class="icon-bar"></SPAN><SPAN class="icon-bar"></SPAN><SPAN class="icon-bar"></SPAN></BUTTON> 
-          <A class="navbar-brand" href="http://v3.bootcss.com/examples/navbar-fixed-top/#">Project 
-name</A>         </DIV>
-<DIV class="navbar-collapse collapse" id="navbar">
-<UL class="nav navbar-nav">
-  <LI class="active"><A 
-  href="http://v3.bootcss.com/examples/navbar-fixed-top/#">Home</A></LI>
-  <LI><A 
-  href="http://v3.bootcss.com/examples/navbar-fixed-top/#about">About</A></LI>
-  <LI><A 
-  href="http://v3.bootcss.com/examples/navbar-fixed-top/#contact">Contact</A></LI>
-  <LI class="dropdown"><A class="dropdown-toggle" role="button" aria-expanded="false" 
-  aria-haspopup="true" href="http://v3.bootcss.com/examples/navbar-fixed-top/#" 
-  data-toggle="dropdown">Dropdown <SPAN class="caret"></SPAN></A>
-  <UL class="dropdown-menu">
-    <LI><A 
-    href="http://v3.bootcss.com/examples/navbar-fixed-top/#">Action</A></LI>
-    <LI><A href="http://v3.bootcss.com/examples/navbar-fixed-top/#">Another 
-    action</A></LI>
-    <LI><A href="http://v3.bootcss.com/examples/navbar-fixed-top/#">Something 
-    else here</A></LI>
-    <LI class="divider" role="separator"></LI>
-    <LI class="dropdown-header">Nav header</LI>
-    <LI><A href="http://v3.bootcss.com/examples/navbar-fixed-top/#">Separated 
-    link</A></LI>
-    <LI><A href="http://v3.bootcss.com/examples/navbar-fixed-top/#">One more 
-    separated link</A></LI></UL></LI></UL>
-<UL class="nav navbar-nav navbar-right">
-  <LI><A href="http://v3.bootcss.com/examples/navbar/">Default</A></LI>
-  <LI><A href="http://v3.bootcss.com/examples/navbar-static-top/">Static 
-  top</A></LI>
-  <LI class="active"><A 
-  href="http://v3.bootcss.com/examples/navbar-fixed-top/">Fixed top <SPAN class="sr-only">(current)</SPAN></A></LI></UL></DIV><!--/.nav-collapse --> 
-      </DIV></NAV>
-<DIV class="container"><!-- Main component for a primary marketing message or call to action --> 
+<BODY><!-- Fixed navbar -->     
+	<NAV class="navbar navbar-default navbar-fixed-top">
+		<DIV class="container">
+			<DIV class="navbar-header">
+            	<BUTTON class="navbar-toggle collapsed" aria-expanded="false" aria-controls="navbar" type="button" data-toggle="collapse" data-target="#navbar">
+    				<SPAN class="sr-only">Toggle navigation</SPAN>             
+					<SPAN class="icon-bar"></SPAN>
+                	<SPAN class="icon-bar"></SPAN>
+                	<SPAN class="icon-bar"></SPAN>
+                </BUTTON> 
+          			<A class="navbar-brand" href="#">Python论坛</A>        
+            </DIV>
+			<DIV class="navbar-collapse collapse" id="navbar">
+				<UL class="nav navbar-nav">
+  					<LI class="active">
+  						<A href="/">主页</A>
+  					</LI>
+  					<LI>
+  						<A href="/linux/">Linux 运维</A>
+  					</LI>
+  					<LI>
+  						<A href="/python/">Python开发</A>
+  					</LI> 
+                 </UL> 
+                 
+                 
+                 
+                 
+                 
+                 {% if user.is_authenticated %}
+                      <ul class="nav navbar-nav navbar-right">  
+                            <LI class="dropdown">
+                                <A class="dropdown-toggle" role="button" aria-expanded="false" aria-haspopup="true" href="#" data-toggle="dropdown">{{ user }}<SPAN class="caret"></SPAN></A>
+                                <UL class="dropdown-menu" style="text-align:right">
+                                    <LI>
+                                        <A href="/login/">个人中心</A>
+                                    </LI>
+                                    <LI class="divider" role="separator"></LI>
+                                    <LI><A href="#">退出</A></LI>
+                                </UL>
+                            </LI>
+                       </ul> 
+                  {% else %} 
+                  		<ul class="nav navbar-nav navbar-right">  
+                 	 		<LI>
+  								<A href="/login/">login</A>
+  							</LI>
+                		 </ul>
+                   
+                   {% endif %}
+                      
+                
+
+			</DIV>
+      </DIV>
+   </NAV>
+ 
+<div id='page-content' class="container-fluid">
+{% block page-content %}
+
+	<div class="row">
+		<div class="col-md-12">
+			<div class="jumbotron">
+				<h2>
+					我就知道是老板
+				</h2>
+				<p>
+					别装逼了，赶紧干活啊~
+				</p>
+				<p>
+					<a class="btn btn-primary btn-large" href="#">Learn more</a>
+				</p>
+			</div>
+			<div class="row">
+				<div class="col-md-4">
+					<div class="thumbnail">
+						<img alt="Bootstrap Thumbnail First" src="/static/img/lb.jpg" />
+						<div class="caption">
+							<h3>
+								Thumbnail label
+							</h3>
+							<p>
+								擦，坑爹啊！
+							</p>
+							<p>
+								<a class="btn btn-primary" href="#">Action</a> <a class="btn" href="#">Action</a>
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-4">
+					<div class="thumbnail">
+						<img alt="Bootstrap Thumbnail Second" src="/static/img/lb2.jpg" />
+						<div class="caption">
+							<h3>
+								Thumbnail label
+							</h3>
+							<p>
+								呵呵，我不发表言论
+							</p>
+							<p>
+								<a class="btn btn-primary" href="#">Action</a> <a class="btn" href="#">Action</a>
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-4">
+					<div class="thumbnail">
+						<img alt="Bootstrap Thumbnail Third" src="/static/img/lb3.png" />
+						<div class="caption">
+							<h3>
+								Thumbnail label
+							</h3>
+							<p>
+								尼玛，就不干~
+							</p>
+							<p>
+								<a class="btn btn-primary" href="#">Action</a> <a class="btn" href="#">Action</a>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-12">
+				</div>
+			</div>
+		</div>
+	</div>
+
+	
+    {% endblock %}
+</div>
+ 
+ 
       
-<DIV class="jumbotron">
-<H1>Navbar example</H1>
-<P>This example is a quick exercise to illustrate how the default, static and 
-fixed to top navbar work. It includes the responsive CSS and HTML, so it also 
-adapts to your viewport and device.</P>
-<P>To see the difference between static and fixed top navbars, just scroll.</P>
-<P><A class="btn btn-lg btn-primary" role="button" href="http://v3.bootcss.com/components/#navbar">View 
-navbar docs »</A>         </P></DIV></DIV><!-- /container -->     <!-- Bootstrap core JavaScript
-    ================================================== --> 
-    <!-- Placed at the end of the document so the pages load faster -->     
+ 
 <SCRIPT src="/static/js/jquery.min.js"></SCRIPT>
      
 <SCRIPT src="/static/js/bootstrap.min.js"></SCRIPT>
