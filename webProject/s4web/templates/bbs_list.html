@@ -3,8 +3,8 @@
 <div class='col-xs-6'>
 <h2></h2>
 {% for bbs in bbs_list %}
-	<h4 style="color:red">{{ bbs.title }} {{ bbs.author }} {{ bbs.publish_date }} </h4>
-    <p> {{ bbs.content }} </p>
+	<h4><a href="/detail/{{bbs.id}}" target="_blank">{{ bbs.title }}</a> | {{ bbs.author }} {{ bbs.publish_date }} </h4>
+    <p> {{ bbs.content | truncatechars:150 }} </p>
     <hr>
 {% endfor %}
 </div>

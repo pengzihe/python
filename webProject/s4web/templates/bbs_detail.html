@@ -1,0 +1,17 @@
+{% extends "index.html" %}
+{% block page-content %}
+	<div class='col-xs-6'>
+	<h2>{{ bbs_obj.title }}</h2>
+	
+	<div id="abc">{{ bbs_obj.content }}</div>
+     	<hr>
+
+<SCRIPT src="/static/js/jquery.min.js"></SCRIPT>	
+<script type="text/javascript">
+	var bbs_content=$("#abc").text();
+	$("#abc").html(bbs_content);
+</script>
+
+
+	</div>
+{% endblock %}

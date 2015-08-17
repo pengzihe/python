@@ -26,7 +26,7 @@ rel="stylesheet">     <!-- Just for debugging purposes. Don't actually copy thes
 <BODY><!-- Fixed navbar -->     
 	<NAV class="navbar navbar-default navbar-fixed-top">
 		<DIV class="container">
-			<DIV class="navbar-header">
+			<!--<DIV class="navbar-header">
             	<BUTTON class="navbar-toggle collapsed" aria-expanded="false" aria-controls="navbar" type="button" data-toggle="collapse" data-target="#navbar">
     				<SPAN class="sr-only">Toggle navigation</SPAN>             
 					<SPAN class="icon-bar"></SPAN>
@@ -34,18 +34,25 @@ rel="stylesheet">     <!-- Just for debugging purposes. Don't actually copy thes
                 	<SPAN class="icon-bar"></SPAN>
                 </BUTTON> 
           			<A class="navbar-brand" href="#">Python论坛</A>        
-            </DIV>
+            </DIV>-->
 			<DIV class="navbar-collapse collapse" id="navbar">
 				<UL class="nav navbar-nav">
-  					<LI class="active">
-  						<A href="/">主页</A>
-  					</LI>
-  					<LI>
-  						<A href="/linux/">Linux 运维</A>
-  					</LI>
-  					<LI>
-  						<A href="/python/">Python开发</A>
-  					</LI> 
+                	{% ifequal page 'index' %}
+                        <LI class="active"><A href="/">主页</A></LI>
+                    {% else %}
+                        <LI><A href="/">主页</A></LI>
+                    {% endifequal %}
+                    {% ifequal page 'linux' %}
+                        <LI class="active"><A href="/linux/">Linux 运维</A></LI>
+                    {% else %}
+                        <LI><A href="/linux/">Linux 运维</A></LI>
+                    {% endifequal %}
+                    {% ifequal page 'python' %}     
+                        <LI class="active"><A href="/python/">Python开发</A></LI>    
+                    {% else %}
+                        <LI><A href="/python/">Python开发</A></LI> 
+                    {% endifequal %}
+                       
                  </UL> 
                  
                  
@@ -61,7 +68,7 @@ rel="stylesheet">     <!-- Just for debugging purposes. Don't actually copy thes
                                         <A href="/login/">个人中心</A>
                                     </LI>
                                     <LI class="divider" role="separator"></LI>
-                                    <LI><A href="#">退出</A></LI>
+                                    <LI><A href="/logout/">退出</A></LI>
                                 </UL>
                             </LI>
                        </ul> 

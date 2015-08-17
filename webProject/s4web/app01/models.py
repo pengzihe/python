@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.contrib.auth.models import User
 # Create your models here.
 
 class bbs(models.Model):
@@ -12,7 +12,7 @@ class bbs(models.Model):
 	view_count = models.IntegerField(default=0)
 	comment_count = models.IntegerField(default=0)
 	ranking = models.IntegerField(default=1001)
-	author = models.ForeignKey('Author')
+	author = models.ForeignKey(User)
 	publish_date = models.DateField()
 	modify_date = models.DateField()
 	def __unicode__(self):

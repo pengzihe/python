@@ -18,5 +18,9 @@ urlpatterns = patterns('',
 	(r'^linux/$',linux_bbs),
 	(r'^python/$',python_bbs),
 	(r'^login_auth/$',login_auth),
-	(r'^login/$',login)
+	(r'^logout/$',logout),
+	(r'^login/$',login),
+	(r'^article/$',article),
+	(r'^submit_article/$',submit_article),
+	(r'detail/(\d+)/',bbs_detail)
 )
