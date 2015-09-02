@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<!-- saved from url=(0048)http://getbootstrap.com/2.3.2/examples/hero.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>Python's chats</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="/static/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+    </style>
+    <link href="/static/css/bootstrap-responsive.css" rel="stylesheet">
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/js/bootstrap.js"></script>
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../assets/js/html5shiv.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+  
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+         
+          <a class="brand" href="#">Python Web Chat</a>
+          {% if user.is_authenticated %}
+                      <ul class="nav navbar-nav navbar-right">
+                            <LI class="dropdown">
+                                <A class="dropdown-toggle" role="button" aria-expanded="false" aria-haspopup="true" href="#" data-toggle="dropdown">{{ user }}<SPAN class="caret"></SPAN></A>
+                                <UL class="dropdown-menu" style="text-align:right">
+                                    <LI>
+                                        <A href="/login/">个人中心</A>
+                                    </LI>
+                                    <LI class="divider" role="separator"></LI>
+                                    <LI><A href="/logout/">退出</A></LI>
+                                </UL>
+                            </LI>
+                       </ul>
+                  {% else %}
+                                <ul class="nav navbar-nav navbar-right">
+                                        <LI>
+                                                                <A href="/login/">login</A>
+                                                        </LI>
+                                 </ul>
+
+                   {% endif %}
+          
+        
+        </div>
+      </div>
+    </div>
+
+
+    <div class="container">
+{% block page-content %}
+      <!-- Main hero unit for a primary marketing message or call to action -->
+      <div class="hero-unit">
+      	<div class="row">
+        	<h3>聊天室列表</h3>
+        	<div class="col-xs-6 col-md-3">
+                {% for room in rooms %}
+                    <a href="/room_num/{{ room.id }}" target="_blank"> {{ room }}  </a> <hr>
+                 {% endfor%}
+            </div>
+      	</div>
+      </div>
+
+      <!-- Example row of columns -->
+     
+{% endblock %}
+      <hr>
+
+      <footer>
+        <p>© Company 2013</p>
+      </footer>
+
+    </div> <!-- /container -->
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    
+
+  
+
+</body></html>

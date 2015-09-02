@@ -1,5 +1,5 @@
 """
-Django settings for s4web project.
+Django settings for chats project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.6/topics/settings/
@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'pp42l(q^p6kh_z!swp16zztt#)uz2s9((b#k4)pi5p%t$n&s$8'
+SECRET_KEY = 'c36995%l!4l)8y$^s0(k@2w2c52$^ashklt!7(w=qz^m6(%9t2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -36,10 +36,8 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app01',
-    'django.contrib.sites',
-    'django_comments',
-	
+    'chat01',
+   # 'south',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -51,9 +49,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 's4web.urls'
+ROOT_URLCONF = 'chats.urls'
 
-WSGI_APPLICATION = 's4web.wsgi.application'
+WSGI_APPLICATION = 'chats.wsgi.application'
 
 
 # Database
@@ -62,11 +60,11 @@ WSGI_APPLICATION = 's4web.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'web',
-	'USER': 'root',
-	'PASSWORD': '123456',
-	'HOST': '',
-	'PORT': '',
+        'NAME': 'chats',
+        'USER': 'root',
+        'PASSWORD': '123456',
+        'HOST': '',
+        'PORT': '',
     }
 }
 
@@ -88,9 +86,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
-
-TEMPLATE_DIRS = ('/root/python/github/python/webProject/s4web/templates',)
-
+TEMPLATE_DIRS = (os.path.join(BASE_DIR,"templates"),)
 STATICFILES_DIRS = (os.path.join(BASE_DIR,"static"),)
-
-SITE_ID=1

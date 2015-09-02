@@ -1,17 +1,30 @@
 {% extends "index.html" %}
+{% load comments %}
 {% block page-content %}
+
 	<div class='col-xs-6'>
-	<h2>{{ bbs_obj.title }}</h2>
+		<h2>{{ bbs_obj.title }}</h2>
 	
-	<div id="abc">{{ bbs_obj.content }}</div>
+	<div id="content">{{ bbs_obj.content }}</div>
      	<hr>
+
+
+
+	<br/>
+	<form action="/sub_comment/" method="get">
+		<textarea  cols="80"  name="text" rows="10"></textarea>
+		<hr>
+		<input type=hidden name='bbs_id' value={{bbs_obj.id}} /> 
+		 <input class="btn btn-info" type="submit"  value="Submit">
+	</form>
+
+	<br/>
+
+	{% render_comment_list for bbs_obj %}
 
 <SCRIPT src="/static/js/jquery.min.js"></SCRIPT>	
 <script type="text/javascript">
-	var bbs_content=$("#abc").text();
-	$("#abc").html(bbs_content);
+	var bbs_content=$("#content").text();
+	$("#content").html(bbs_content);
 </script>
-
-
-	</div>
 {% endblock %}

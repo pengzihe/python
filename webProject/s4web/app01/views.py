@@ -1,5 +1,5 @@
 from django.shortcuts import render, render_to_response
-from django.contrib import auth
+from django.contrib import auth,comments
 from django.contrib.auth.models import User
 # Create your views here.
 from app01.models import *
@@ -41,15 +41,14 @@ def login(request):
 
 def login_auth(request):
 	print request.POST
-	username,password = request.POST['username'],request.POST['passwd']
-	user = auth.authenticate(username = username,password = password)
-	print '+++++',user
-	if user is not None:  #authentications is correct
-		auth.login(request,user)
-		return HttpResponseRedirect('/')
-	else:
-		return render_to_response("login.htm",{'login_err':"Wrong username or password!"})
-
+        username,password = request.POST['username'],request.POST['password']
+        user = auth.authenticate(username = username,password = password)
+        print '+++++',user
+        if user is not None:  #authentications is correct
+                auth.login(request,user)
+                return HttpResponseRedirect('/')
+        else:
+                return render_to_response("login.htm",{'login_err':"Wrong username or password!"})
 		
 
 
@@ -86,3 +85,21 @@ def submit_article(request):
 		modify_date = datetime.datetime.now()
 	)
 	return HttpResponse('yes')
+
+def sub_comment(request):
+	content_type = 7
+	bbs_id = request.GET.get('bbs_id')
+	comment = request.GET.get('text')
+	sub_date = datetime.datetime.now()
+	
+	c = comments.Comment.objects.create(
+		content_type_id = content_type,
+		object_pk = bbs_id,
+		site_id = 1,
+		user_id = request.user.id,
+		comment = comment,
+		submit_date = sub_date,
+	)
+	c.save()
+	return HttpResponseRedirect("/detail/%s/" % bbs_id)
+

@@ -22,5 +22,6 @@ urlpatterns = patterns('',
 	(r'^login/$',login),
 	(r'^article/$',article),
 	(r'^submit_article/$',submit_article),
-	(r'detail/(\d+)/',bbs_detail)
+	(r'detail/(\d+)/',bbs_detail),
+	(r'^sub_comment/$',sub_comment),
 )
