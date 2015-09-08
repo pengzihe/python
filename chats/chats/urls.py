@@ -11,9 +11,12 @@ urlpatterns = patterns('',
     # url(r'^blog/', include('blog.urls')),
 
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^accounts/login/$','django.contrib.auth.views.login',{'template_name':'login.html'}),
     url(r'^$',index),
     url(r'^room_num/(\d+)/',room_num),
     url(r'^login/$',login),
     url(r'^login_auth/$',login_auth),
     url(r'^getMsg/$',getMsg),
+    url(r'^pullMsg/$',pushMsg),
+    url(r'^getMembers/$',getMembers),
 )

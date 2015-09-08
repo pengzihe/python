@@ -4,7 +4,10 @@
 <style type="text/css">
 
 .div_border{border:solid black 1px}
-#chat{ height:500px}
+#chat{ 
+	height:500px;
+	overflow:auto;
+}
 #member_list{ height:589px}
 #send_msg{ 
 	height:67px;
@@ -16,9 +19,9 @@
 --------------
 <div id="main" class="container">
 	<div id="main_chat" class="div_border col-xs-12 col-md-8">
-    	main
+    	您所在的聊天室位置是：{{ room_obj.name }}
         <div id="chat" class="div_border">
-            display all meesages here
+            display all meesages here<br>
         </div> <!-- end chat -->
         <div id="send_msg" class="div_border">
             
@@ -27,10 +30,13 @@
         </div><!-- end send_msg -->
     </div> <!-- end main_chat -->
     <div id="member_list" class="div_border col-xs-5 col-md-2">
+    	<ul id="members">
+        </ul>
     	steven
     	mico
     </div><!-- end member_list_chat -->
 </div> <!-- end main -->
+
 
 <script type="text/javascript">
 	
@@ -45,14 +51,46 @@
 		return str;
 	}  //end currentTime
 
+	
+	
+	//pullMsg
+	var message_id = 0
+	setInterval(function(){
+		//console.log(message_id );
+		$.get('/pullMsg/', {msg_id: message_id,room_id:"{{ room_obj.id }}" },function(new_msgs){
+			var msg_dic = JSON.parse(new_msgs); //解析JSON数据
+			
+			//console.log(msg_dic.msg_num);
+			window['message_id'] = msg_dic.msg_num; //reset number
+			console.log(message_id );
+			for(n in msg_dic.msgs)
+			{
+				console.log(msg_dic.msgs[n]);
+				var cur_time = msg_dic.msgs[n][0]
+				var user = msg_dic.msgs[n][1]
+				var msg = msg_dic.msgs[n][2]
+				var login_name = "{{ user.username }}"
+				if(login_name != user){
+					$('#chat').append("<br><span>" + cur_time + " " + user + "<br>" + msg + "</span>");
+				}// end if
+			}//end for
+			
+		})//end get
+	},2000) // end setInterval
+	
+	//end pullMsg
+	
 	function sendMsg()
 	{
 		var message = $('#msg').val();
 		var time = currentTime();
 		console.log(message);
-		$.get('/getMsg/',{user: "{{ user }}",msg:message})
-		$('#chat').append("<span>" + time + "<br>" + message + "</span><br>");
-		$('#msg').val('');
+		var Msg = $.trim($('#msg').val())
+		if( Msg.length != 0){
+			$.get('/getMsg/',{user: "{{ user }}",msg:message,room_id:"{{ room_obj.id }}"})
+			$('#chat').append("<span style='color:red'>" + time + "<br>" + message + "</span><br>");
+			$('#msg').val('');
+		} // end if
 	} // end sendMsg
 	
 	$('#msg').keyup(function(event){
@@ -61,6 +99,26 @@
 					sendMsg();
 			}
 		}) //end keyup
+		
+	var refresh_members = setInterval(
+		function()
+		{
+			$.getJSON('/getMembers/',{room_id: "{{ room_obj.id }}"},
+			function(member_list)
+			{
+				$('#members').html('');
+				for(m in member_list)
+				{
+					//console.log(m);
+					
+					$("#members").append("<li>" + m + "</li>");
+					
+				}// end for
+				
+			
+			})   //end get
+		}// end refresh function
+	,2000)// end refresh function
 		
 </script>
 
